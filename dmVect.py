@@ -19,30 +19,29 @@ Seattle = EarthLocation(lat=labLat*u.deg,
 theta_d = 0 # Composition dipole pointed in some direction
 
 ## X-Vector
-if (False):
-	inPhaseX=np.zeros(len(days))
-	outPhaseX=np.zeros(len(days))
-	index=0
+inPhaseX=np.zeros(len(days))
+outPhaseX=np.zeros(len(days))
+index=0
 
-	for dayNum in days:
+for dayNum in days:
 
-		timeStamp=dayNum*24.0*3600.0+newYearTime
+	timeStamp=dayNum*24.0*3600.0+newYearTime
 
-		dateTime = datetime.fromtimestamp(timeStamp)
-		print(dayNum)
+	dateTime = datetime.fromtimestamp(timeStamp)
+	print(dayNum)
 
-		xGeo=SkyCoord(ra=0*u.degree, dec=0*u.degree, frame='gcrs')
-		xLocal=xGeo.transform_to(AltAz(obstime=dateTime,location=Seattle))
+	xGeo=SkyCoord(ra=0*u.degree, dec=0*u.degree, frame='gcrs')
+	xLocal=xGeo.transform_to(AltAz(obstime=dateTime,location=Seattle))
 
-		xAlt=xLocal.alt.deg
-		xAz=xLocal.az.deg
+	xAlt=xLocal.alt.deg
+	xAz=xLocal.az.deg
 
-		inPhaseX[index]=-np.cos(xAlt*np.pi/180)*np.sin((xAz+theta_d)*np.pi/180)
-		outPhaseX[index]= -np.cos(xAlt*np.pi/180)*np.cos((xAz+theta_d)*np.pi/180)
-		index+=1
+	inPhaseX[index]=-np.cos(xAlt*np.pi/180)*np.sin((xAz+theta_d)*np.pi/180)
+	outPhaseX[index]= -np.cos(xAlt*np.pi/180)*np.cos((xAz+theta_d)*np.pi/180)
+	index+=1
 
-	output=np.column_stack((days,inPhaseX,outPhaseX))
-	np.savetxt('xVectMin.out',output)
+output=np.column_stack((days,inPhaseX,outPhaseX))
+np.savetxt('xVectMin.out',output)
 
 
 ## Y-Vector
