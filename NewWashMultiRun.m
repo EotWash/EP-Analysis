@@ -1,9 +1,5 @@
 warning('off')
-%%
 
-injAmp = 20e-5*(r*m*aGalaxy);
-inj1 = false; % Quadrature injection
-inj2 = false; % Amplitude injection
 %%
 
 w0 = 2*pi*6.8944e-4;
@@ -30,11 +26,18 @@ TTFreq = 0.457120e-3;
 
 aDM = 1e-25/9.73e-19; % Torque to g_dm conversion for Be-Al
 
+%%
+
+injAmp = 20e-5*(r*m*aGalaxy);
+inj1 = false; % Quadrature injection
+inj2 = false; % Amplitude injection
+
 %% Data loading
 
 if (true)
 
-    runs = ["run6875Fits.mat" "run6891Fits.mat" "run6893Fits.mat" "run6895Fits.mat"];
+    runs = ["run6875Fits.mat" "run6891Fits.mat" "run6893Fits.mat" ...
+        "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat"];
 %     runs = ["run6891Fits.mat"];
     timFitin =[];
     Cin = [];
@@ -85,18 +88,25 @@ if (true)
     sampF = 1/(timFit(5)-timFit(4));
 
     % Loading in basis funtions outputted from sunVect.py
-    rawSun=load('galVectMin.out');
+    rawSun=load('sunVectMin.out');
     sunSampF = 1/(rawSun(2,1)-rawSun(1,1))/3600/24;
     timSun=decimate(rawSun(:,1),floor(sunSampF/sampF));
     inSun=decimate(rawSun(:,2),floor(sunSampF/sampF));
     outSun=decimate(rawSun(:,3),floor(sunSampF/sampF));
+
+    % Loading in basis funtions outputted from sunVect.py
+    rawGal=load('galVectMin.out');
+    galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
+    timGal=decimate(rawGal(:,1),floor(galSampF/sampF));
+    inGal=decimate(rawGal(:,2),floor(galSampF/sampF));
+    outGal=decimate(rawGal(:,3),floor(galSampF/sampF));
  
     if (inj1)
         for ind = 1:length(timFit)
             % Sync basis function and data
-            sunIndex = find(floor(timSun-timFit(ind)/24/3600)==0,1);
-            C(ind) = C(ind) + sqrt(2)/2*P(ind)*injAmp*inSun(sunIndex)+injAmp;
-            S(ind) = S(ind) + sqrt(2)/2*P(ind)*injAmp*inSun(sunIndex)+injAmp;
+            galIndex = find(floor(timGal-timFit(ind)/24/3600)==0,1);
+            C(ind) = C(ind) + sqrt(2)/2*P(ind)*injAmp*inGal(galIndex)+injAmp;
+            S(ind) = S(ind) + sqrt(2)/2*P(ind)*injAmp*inGal(galIndex)+injAmp;
         end
     end
 end
@@ -109,15 +119,11 @@ torqFit = C+i*S;
 amp = sqrt(mean(C)^2+mean(S)^2);
 unc = 1/amp*sqrt(mean(C)^2*std(C)^2+mean(S)^2*std(S)^2)/sqrt(length(C));
 
-etaEarth = amp/(r*m*aEarth);
-etaEarthUnc = unc/(r*m*aEarth);
-
 disp(['Cosine Torque: ' num2str(mean(C)*1e15) ' fN m +- ' num2str(std(C)/sqrt(length(C))*1e15) ' fN m'])
 disp(['Sine Torque: ' num2str(mean(S)*1e15) ' fN m +- ' num2str(std(S)/sqrt(length(S))*1e15) ' fN m'])
 disp(['Amp Torque: ' num2str(amp*1e15) ' fN m +- ' num2str(unc*1e15) ' fN m'])
 disp([' '])
-disp(['Eta Earth: ' num2str(etaEarth) ' +- ' num2str(etaEarthUnc)])
-disp([' '])
+
 
 %% Thermal Circle Calculations
 
@@ -125,66 +131,12 @@ thermPhi = linspace(0,2*pi,100);
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq));
 thermCirc = thermAmp*(cos(thermPhi)+i*sin(thermPhi))+mean(torqFit);
 
-%% Dark Matter Calcuations
+%% Sun Fits
 
-amp1w = sqrt(C.^2+S.^2);
-
-sampFDM = sampF;
-
-dmFreq = linspace(1/24/3600,0.95*sampFDM/2,floor(sampFDM*24*3600*2));
-
-ampDM = [];
-uncDM = [];
-
-numDaysFitDM = 1;
-
-for indexDM = 1:length(dmFreq)
-    
-    fFitDM = dmFreq(indexDM);
-    wFit = 2*pi*fFitDM;
-    fitSamplesDM = floor(sampFDM/fFitDM);
-    
-    CDM = [];
-    SDM = [];
-    
-    for index = 0:lenDays/numDaysFitDM
-        
-        indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFitDM)==index);
-
-        cut = timFit(indexCut)';
-
-        if not(isempty(cut))
-            nPeriods = (cut(end)-cut(1))*fFitDM;
-           
-            x = [cos(wFit*cut) sin(wFit*cut)];  
-    %             ones(length(cut),1)];
-            
-            y = detrend(amp1w(indexCut))';
-        
-            a = inv(x'*x)*x'*y;
-            if (and(and(a(1)~=0,a(2)~=0),nPeriods>=2))
-                CDM = [CDM a(1)];
-                SDM = [SDM a(2)];
-            end 
-        end
-    
-    end
-        
-    ampDM = [ampDM; sqrt(mean(CDM)^2+mean(SDM)^2)];
-    uncDM = [uncDM; 1/amp*sqrt(mean(CDM)^2*std(CDM)^2+mean(SDM)^2*std(SDM)^2)/sqrt(length(CDM))];
-
-end
-
-ampDM = aDM*ampDM;
-uncDM = aDM*uncDM;
-
-
-%% Daily Fits
-
-cDay = [];
-sDay = [];
-timDay = [];
-uDay = [];
+cSun = [];
+sSun = [];
+timSunFit = [];
+uSun = [];
 
 longFit = [];
 longTim = [];
@@ -203,37 +155,34 @@ for index = 0:lenDays/numDaysFit
     cut = timFit(indexCut);
     pol = sign(mean(P(indexCut)));
     u = U(indexCut);
-%     uw = 1./u.^2/sum(1./u.^2)*length(u);
     y = pol*detrend(abs(torqFit(indexCut)),'constant');
 
     if (inj2)
         for ind = 1:length(cut)
             % Sync basis function and data
-            sunIndex = find(floor(timSun-cut(ind)/24/3600)==0,1);
-            y(ind) = y(ind) + P(ind)*injAmp*inSun(sunIndex);
+            galIndex = find(floor(timSun-cut(ind)/24/3600)==0,1);
+            y(ind) = y(ind) + P(ind)*injAmp*inSun(galIndex);
         end
     end
 
     if not(isempty(cut))   
         if (length(y)>=lenMin)
             % Sync basis function and data 
-            sunIndex = [];
+            galIndex = [];
             for cutSun = cut
-                sunIndex = [sunIndex find(floor(timSun-cutSun/24/3600)==0,1)];
+                galIndex = [galIndex find(floor(timSun-cutSun/24/3600)==0,1)];
             end
             % Linear least squares fitting to basis functions and offset
 %             x = [inSun(sunIndex) outSun(sunIndex) ones(length(cut),1)];
-            x = [inSun(sunIndex) outSun(sunIndex)];
-            %     x = [cos(wDay*cut') sin(wDay*cut')...        
-            %             ones(length(cut),1)];
+            x = [inSun(galIndex) outSun(galIndex)];
             if not(isempty(x))
                 a = inv(x'*x)*x'*y';
             
                 if (and(a(1)~=0,a(2)~=0))
-                    cDay = [cDay a(1)];
-                    sDay = [sDay a(2)];
-                    uDay = [uDay std(a'*x'-y)];
-                    timDay = [timDay mean(timFit(indexCut))];
+                    cSun = [cSun a(1)];
+                    sSun = [sSun a(2)];
+                    uSun = [uSun std(a'*x'-y)];
+                    timSunFit = [timSunFit mean(timFit(indexCut))];
                     longFit = [longFit a'*x'];
                     longTim = [longTim timFit(indexCut)];
                     longDat = [longDat y];
@@ -250,22 +199,100 @@ for index = 0:lenDays/numDaysFit
     end
 end
 
-torqDaily = cDay+i*sDay;
+torqSun = cSun+i*sSun;
 
-ampDaily = mean(cDay);
-uncDaily = std(cDay)/sqrt(length(cDay));
+ampSun = mean(cSun);
+uncSun = std(cSun)/sqrt(length(cSun));
 
-etaSun = ampDaily/(r*m*aSun);
-etaSunUnc = uncDaily/(r*m*aSun);
+etaSun = ampSun/(r*m*aSun);
+etaSunUnc = uncSun/(r*m*aSun);
 
-etaGalaxy = ampDaily/(r*m*aGalaxy);
-etaGalaxyUnc = uncDaily/(r*m*aGalaxy);
-
-disp(['Cosine Daily: ' num2str(mean(cDay)*1e15) ' fN m +- ' num2str(std(cDay)/sqrt(length(cDay))*1e15) ' fN m'])
-disp(['Sine Daily: ' num2str(mean(sDay)*1e15) ' fN m +- ' num2str(std(sDay)/sqrt(length(sDay))*1e15) ' fN m'])
-disp(['Amp Daily: ' num2str(ampDaily*1e15) ' fN m +- ' num2str(uncDaily*1e15) ' fN m'])
+disp(['Cosine Sun: ' num2str(mean(cSun)*1e15) ' fN m +- ' num2str(std(cSun)/sqrt(length(cSun))*1e15) ' fN m'])
+disp(['Sine Sun: ' num2str(mean(sSun)*1e15) ' fN m +- ' num2str(std(sSun)/sqrt(length(sSun))*1e15) ' fN m'])
+disp(['Amp Sun: ' num2str(ampSun*1e15) ' fN m +- ' num2str(uncSun*1e15) ' fN m'])
 disp([' '])
-disp(['Eta Daily: ' num2str(etaSun) ' +- ' num2str(etaSunUnc)])
+disp(['Eta Sun: ' num2str(etaSun) ' +- ' num2str(etaSunUnc)])
+disp([' '])
+
+%% Galaxy Fits
+
+cGal = [];
+sGal = [];
+timGalFit = [];
+uGal = [];
+
+longFit = [];
+longTim = [];
+longDat = [];
+longU = [];
+
+fDay = 1/24/3600;
+wDay = 2*pi*fDay;
+daySamples = floor(sampF/fDay);
+lenMin = 0.75*24*3600*TTFreq/2;
+numDaysFit = 1;
+
+for index = 0:lenDays/numDaysFit
+
+    indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFit)==index);
+    cut = timFit(indexCut);
+    pol = sign(mean(P(indexCut)));
+    u = U(indexCut);
+    y = pol*detrend(abs(torqFit(indexCut)),'constant');
+
+    if (inj2)
+        for ind = 1:length(cut)
+            % Sync basis function and data
+            galIndex = find(floor(timGal-cut(ind)/24/3600)==0,1);
+            y(ind) = y(ind) + P(ind)*injAmp*inGal(galIndex);
+        end
+    end
+
+    if not(isempty(cut))   
+        if (length(y)>=lenMin)
+            % Sync basis function and data 
+            galIndex = [];
+            for cutGal = cut
+                galIndex = [galIndex find(floor(timGal-cutGal/24/3600)==0,1)];
+            end
+            % Linear least squares fitting to basis functions and offset
+%             x = [inSun(sunIndex) outSun(sunIndex) ones(length(cut),1)];
+            x = [inGal(galIndex) outGal(galIndex)];
+            if not(isempty(x))
+                a = inv(x'*x)*x'*y';
+            
+                if (and(a(1)~=0,a(2)~=0))
+                    cGal = [cGal a(1)];
+                    sGal = [sGal a(2)];
+                    uGal = [uGal std(a'*x'-y)];
+                    timGalFit = [timGalFit mean(timFit(indexCut))];
+                    longFit = [longFit a'*x'];
+                    longTim = [longTim timFit(indexCut)];
+                    longDat = [longDat y];
+                    longU = [longU u];
+        
+                    longFit = [longFit nan];
+                    longTim = [longTim nan];
+                    longDat = [longDat nan];
+                    longU = [longU nan];
+        
+                end
+            end
+        end
+    end
+end
+
+torqGal = cGal+i*sGal;
+
+ampGal = mean(cGal);
+uncGal = std(cGal)/sqrt(length(cGal));
+
+etaGalaxy = ampGal/(r*m*aGalaxy);
+etaGalaxyUnc = uncGal/(r*m*aGalaxy);
+
+disp(['Cosine Galaxy: ' num2str(mean(cGal)*1e15) ' fN m +- ' num2str(std(cGal)/sqrt(length(cGal))*1e15) ' fN m'])
+disp(['Sine Galaxy: ' num2str(mean(sGal)*1e15) ' fN m +- ' num2str(std(sGal)/sqrt(length(sGal))*1e15) ' fN m'])
+disp(['Amp Galaxy: ' num2str(ampGal*1e15) ' fN m +- ' num2str(uncGal*1e15) ' fN m'])
 disp([' '])
 disp(['Eta Galaxy: ' num2str(etaGalaxy) ' +- ' num2str(etaGalaxyUnc)])
 
@@ -317,35 +344,35 @@ xlabel('Time (days)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',2);
-% ylim([-0.02 0.02])
+ylim([-0.02 0.02])
 % xlim([1e-5 1e0])
 legend('Data','Fit','Interpreter', 'latex')
 grid on
 
-figure(7)
-subplot(2,1,1)
-l=errorbar(timDay/3600/24, real(torqDaily)*1e15,uDay*1e15,'.');
-ylabel('In-Phase Daily (fN m)','Interpreter', 'latex')
-xlabel('Time (days)','Interpreter', 'latex')
-set(gca,'FontSize',16);
-% ylim([-3 3])
-grid on
-subplot(2,1,2)
-ll=errorbar(timDay/3600/24, imag(torqDaily)*1e15,uDay*1e15,'.');
-ylabel('Out-of-Phase Daily (fN m)','Interpreter', 'latex')
-xlabel('Time (days)','Interpreter', 'latex')
-set(gca,'FontSize',16);
-set(l,'MarkerSize',16);
-set(ll,'MarkerSize',16);
-% ylim([-3 3])
-% xlim([1e-5 1e0])
-grid on
+% figure(7)
+% subplot(2,1,1)
+% l=errorbar(timGalFit/3600/24, real(torqGal)*1e15,uGal*1e15,'.');
+% ylabel('In-Phase Daily (fN m)','Interpreter', 'latex')
+% xlabel('Time (days)','Interpreter', 'latex')
+% set(gca,'FontSize',16);
+% % ylim([-3 3])
+% grid on
+% subplot(2,1,2)
+% ll=errorbar(timGalFit/3600/24, imag(torqGal)*1e15,uGal*1e15,'.');
+% ylabel('Out-of-Phase Daily (fN m)','Interpreter', 'latex')
+% xlabel('Time (days)','Interpreter', 'latex')
+% set(gca,'FontSize',16);
+% set(l,'MarkerSize',16);
+% set(ll,'MarkerSize',16);
+% % ylim([-3 3])
+% % xlim([1e-5 1e0])
+% grid on
 
-figure(8)
-l=errorbar(real(torqDaily)*1e15,imag(torqDaily)*1e15,uDay*1e15,uDay*1e15,uDay*1e15,uDay*1e15,'.');
+figure(7)
+l=errorbar(real(torqSun)*1e15,imag(torqSun)*1e15,uSun*1e15,uSun*1e15,uSun*1e15,uSun*1e15,'.');
 % l=plot(real(torqDaily)*1e15,imag(torqDaily)*1e15,'.');
-ylabel('Out-of-Phase Daily (fN m)','Interpreter', 'latex')
-xlabel('In-Phase Daily (fN m)','Interpreter', 'latex')
+ylabel('Out-of-Phase Sun (fN m)','Interpreter', 'latex')
+xlabel('In-Phase Sun (fN m)','Interpreter', 'latex')
 % text(-2.5e-3,18e-3,['$\eta_\odot$ = ' num2str(etaSun,2) ' $\pm$ ' num2str(etaSunUnc,2)],'Interpreter', 'latex','FontSize',16)
 % text(-2.5e-3,16e-3,['$\eta_{DM}$ = ' num2str(etaGalaxy,2) ' $\pm$ ' num2str(etaGalaxyUnc,2)],'Interpreter', 'latex','FontSize',16)
 set(gca,'FontSize',16);
@@ -354,85 +381,99 @@ ylim([-0.01 0.01])
 xlim([-0.01 0.01])
 grid on
 
-figure(9)
-l=plot(timDay/3600/24, abs(torqDaily)*1e15,'.');
-ylabel('Daily Amplitude (fN m)','Interpreter', 'latex')
-xlabel('Time (days)','Interpreter', 'latex')
+figure(8)
+% l=errorbar(real(torqGal)*1e15,imag(torqGal)*1e15,uGal*1e15,uGal*1e15,uGal*1e15,uGal*1e15,'.');
+l=plot(real(torqGal)*1e15,imag(torqGal)*1e15,'.');
+ylabel('Out-of-Phase Galaxy (fN m)','Interpreter', 'latex')
+xlabel('In-Phase Galaxy (fN m)','Interpreter', 'latex')
+% text(-2.5e-3,18e-3,['$\eta_\odot$ = ' num2str(etaSun,2) ' $\pm$ ' num2str(etaSunUnc,2)],'Interpreter', 'latex','FontSize',16)
+text(-2.5e-3,7e-3,['$\eta_{DM}$ = ' num2str(etaGalaxy,2) ' $\pm$ ' num2str(etaGalaxyUnc,2)],'Interpreter', 'latex','FontSize',16)
 set(gca,'FontSize',16);
-set(l,'MarkerSize',16);
-% ylim([1e-18 1e-9])
-% xlim([1e-5 1e0])
+set(l,'MarkerSize',20);
+ylim([-0.01 0.01])
+xlim([-0.01 0.01])
 grid on
 
-mF = logspace(-5,-2);
-mA = mF*0+1e-25;
+% figure(9)
+% l=plot(timGalFit/3600/24, abs(torqGal)*1e15,'.');
+% ylabel('Daily Amplitude (fN m)','Interpreter', 'latex')
+% xlabel('Time (days)','Interpreter', 'latex')
+% set(gca,'FontSize',16);
+% set(l,'MarkerSize',16);
+% % ylim([1e-18 1e-9])
+% % xlim([1e-5 1e0])
+% grid on
+% 
+% mF = logspace(-5,-2);
+% mA = mF*0+1e-25;
 
-figure(10)
-l=loglog(dmFreq,ampDM, mF, mA, '--', fDEP, aDEP, '--');
-ylabel('$g_{ULDM}$','Interpreter', 'latex')
-xlabel('Frequency (Hz)','Interpreter', 'latex')
-legend('Data', 'MICROSCOPE','DarkEP','Raw Torq Limits','Interpreter', 'latex')
-set(gca,'FontSize',16);
-set(l,'LineWidth',1.5);
-ylim([5e-27 5e-24])
-xlim([1e-5 1e-3])
-grid on
-
-figure(11)
-l=plot(timSun, inSun, timSun, outSun);
-xlabel('Time (days)','Interpreter', 'latex')
+% figure(10)
+% l=loglog(dmFreq,ampDM, mF, mA, '--', fDEP, aDEP, '--');
+% ylabel('$g_{ULDM}$','Interpreter', 'latex')
+% xlabel('Frequency (Hz)','Interpreter', 'latex')
 % legend('Data', 'MICROSCOPE','DarkEP','Raw Torq Limits','Interpreter', 'latex')
-set(gca,'FontSize',16);
-set(l,'LineWidth',1.5);
+% set(gca,'FontSize',16);
+% set(l,'LineWidth',1.5);
 % ylim([5e-27 5e-24])
 % xlim([1e-5 1e-3])
-grid on
+% grid on
+% 
+% figure(11)
+% l=plot(timSun, inSun, timSun, outSun);
+% xlabel('Time (days)','Interpreter', 'latex')
+% % legend('Data', 'MICROSCOPE','DarkEP','Raw Torq Limits','Interpreter', 'latex')
+% set(gca,'FontSize',16);
+% set(l,'LineWidth',1.5);
+% % ylim([5e-27 5e-24])
+% % xlim([1e-5 1e-3])
+% grid on
 
 %% Histrogram
-
-figure(91)
-[Nin,Xin] = hist(Cin,1e2);
-[N,X] = hist(C,Xin);
-bar(Xin*1e15,(Nin))
-hold on
-bar(X*1e15,(N))
-plot(X*1e15,max(N)*exp(-(X.^2)/thermAmp^2),'LineWidth',3)
-hold off
-% xlim([-1 1])
-xlabel('Cosine Torque (fNm)','Interpreter', 'latex')
-ylabel('Number','Interpreter', 'latex')
-legend('Before Cuts','After Cuts','Thermal Noise','Interpreter', 'latex')
-set(gca,'FontSize',16);
-grid on
-
-figure(92)
-[Nin,Xin] = hist(Sin,1e2);
-[N,X] = hist(S,Xin);
-bar(Xin*1e15,(Nin))
-hold on
-bar(X*1e15,(N))
-plot(X*1e15,max(N)*exp(-(X.^2)/thermAmp^2),'LineWidth',3)
-hold off
-% xlim([-1 1])
-xlabel('Sine Torque (fNm)','Interpreter', 'latex')
-ylabel('Number','Interpreter', 'latex')
-legend('Before Cuts','After Cuts','Thermal Noise','Interpreter', 'latex')
-set(gca,'FontSize',16);
-grid on
-
-figure(93)
-[Nin,Xin] = hist(Uin,1e2);
-[N,X] = hist(U,Xin);
-bar(Xin*1e15,(Nin))
-hold on
-bar(X*1e15,(N))
-hold off
-% xlim([-1 1])
-xlabel('Uncertainty (fNm)','Interpreter', 'latex')
-ylabel('Number','Interpreter', 'latex')
-legend('Before Cuts','After Cuts','Interpreter', 'latex')
-set(gca,'FontSize',16);
-grid on
+if (false)
+    figure(91)
+    [Nin,Xin] = hist(Cin,1e2);
+    [N,X] = hist(C,Xin);
+    bar(Xin*1e15,(Nin))
+    hold on
+    bar(X*1e15,(N))
+    plot(X*1e15,max(N)*exp(-(X.^2)/thermAmp^2),'LineWidth',3)
+    hold off
+    % xlim([-1 1])
+    xlabel('Cosine Torque (fNm)','Interpreter', 'latex')
+    ylabel('Number','Interpreter', 'latex')
+    legend('Before Cuts','After Cuts','Thermal Noise','Interpreter', 'latex')
+    set(gca,'FontSize',16);
+    grid on
+    
+    figure(92)
+    [Nin,Xin] = hist(Sin,1e2);
+    [N,X] = hist(S,Xin);
+    bar(Xin*1e15,(Nin))
+    hold on
+    bar(X*1e15,(N))
+    plot(X*1e15,max(N)*exp(-(X.^2)/thermAmp^2),'LineWidth',3)
+    hold off
+    % xlim([-1 1])
+    xlabel('Sine Torque (fNm)','Interpreter', 'latex')
+    ylabel('Number','Interpreter', 'latex')
+    legend('Before Cuts','After Cuts','Thermal Noise','Interpreter', 'latex')
+    set(gca,'FontSize',16);
+    grid on
+    
+    figure(93)
+    [Nin,Xin] = hist(Uin,1e2);
+    [N,X] = hist(U,Xin);
+    bar(Xin*1e15,(Nin))
+    hold on
+    bar(X*1e15,(N))
+    hold off
+    % xlim([-1 1])
+    xlabel('Uncertainty (fNm)','Interpreter', 'latex')
+    ylabel('Number','Interpreter', 'latex')
+    legend('Before Cuts','After Cuts','Interpreter', 'latex')
+    set(gca,'FontSize',16);
+    grid on
+end
 
 %%
 if(false)
@@ -447,10 +488,4 @@ if(false)
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
     print(fig2,'EP_DailyMultiRun.pdf','-dpdf','-r1200')
-
-    fig2=figure(10);
-    set(fig2,'Units','Inches');
-    pos = get(fig2,'Position');
-    set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'ULDM_MultiRun.pdf','-dpdf','-r1200')
 end
