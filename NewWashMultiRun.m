@@ -22,8 +22,6 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 TTFreq = 0.457120e-3; % Turn table frequency (Hz)
 
-aDM = 1e-25/9.73e-19; % Torque to g_dm conversion for Be-Al
-
 %% Injection Controls
 
 injAmp = 20e-5*(r*m*aGalaxy);
@@ -57,6 +55,7 @@ if (true)
         Cin = [Cin detrend(in.out(2,unCut))];
         Sin = [Sin detrend(in.out(3,unCut))];
         Uin = [Uin in.out(4,unCut).^2/(thermAmp^2)/sqrt(length(in.out(4,:)))];
+        
         % Pendulum flip after run6895
         if f<4
             Pin = [Pin in.out(4,unCut)*0+1];
