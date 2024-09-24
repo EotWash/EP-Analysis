@@ -4,7 +4,7 @@ warning('off')
 
 if (true)
 
-    run = ['run6900'];
+    run = ['run6904'];
 
     inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
     inDiff = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
@@ -32,11 +32,11 @@ inTheta = inDiff./inSum;
 
 sampF = 1/(inTim(2)-inTim(1));
 
-% startIndex = 5.25e5;
-% startIndex = 24*3600;
+% startIndex = 2.55e5;
+% startIndex = 10.25*24*3600;
 startIndex = 1e1;
 endIndex = length(inTTAngle);
-% % endIndex = 4e;
+% endIndex = 11.25*24*3600;
 % endIndex = 5.6e5;
 
 %% Calibration
@@ -70,7 +70,7 @@ Press = inPress(startIndex:endIndex);
 % TTFreq = mean(diff(TTAngle/360))*sampF;
 TTFreq = 0.457120e-3;
 
-aDM = 1e-25/9.73e-19 % Torque to g_dm conversion for Be-Al
+aDM = 1e-25/9.73e-19; % Torque to g_dm conversion for Be-Al
 
 
 %% Torsional filter
@@ -106,14 +106,6 @@ x = [cos(wFit*timFilt') sin(wFit*timFilt')...
 y = detrend(angFilt);
 a = inv(x'*x)*x'*y;
 res = y'-a'*x';
-
-[Ar, Fr] = asd2(res, 1/sampF, 1, 3, @hann);
-
-figure(111)
-plot(timFilt, res)
-
-figure(112)
-loglog(Fr, Ar)
 
 disp(['Cosine 1omega: ' num2str(a(1))])
 disp(['Sine 1omega: ' num2str(a(2))])
@@ -203,7 +195,7 @@ for index = 0:floor(length(tFit)/fitSamples)-1
     timFit = [timFit mean(timFilt(index*fitSamples+1:(index+1)*fitSamples+1))];
 
 end
-if (false)
+if (true)
     out = [timFit+inTim(1); C; S; U];
     save([run 'Fits.mat'],'out')
 end
@@ -371,7 +363,7 @@ if (true)
     grid on
     
     figure(11)
-    l=plot(ttFit, tqqFit);
+    l=plot(timFilt, torqFilt);
     ylabel('Torque (N m)','Interpreter', 'latex')
     xlabel('Time (days)','Interpreter', 'latex')
     set(gca,'FontSize',16);

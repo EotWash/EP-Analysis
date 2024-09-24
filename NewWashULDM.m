@@ -23,12 +23,13 @@ aGalaxy =  5e-11;
 
 % TTFreq = mean(diff(TTAngle/360))*sampF;
 TTFreq = 0.457120e-3;
+wTT = 2*pi*TTFreq;
 
 aDM = 1e-25/9.73e-19; % Torque to g_dm conversion for Be-Al
 
 %%
 
-injAmp = 1e-25/aDM;
+injAmp = 1e-24/aDM;
 wInj = 2*pi*6e-5;
 inj1 = false; % Quadrature injection
 inj2 = false; % Amplitude injection
@@ -38,8 +39,8 @@ inj2 = false; % Amplitude injection
 if (true)
 
     runs = ["run6875Fits.mat" "run6891Fits.mat" "run6893Fits.mat" ...
-        "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat"];
-%     runs = ["run6891Fits.mat"];
+        "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
+        "run6903Fits.mat" "run6904Fits.mat"];
     timFitin =[];
     Cin = [];
     Sin = [];
@@ -48,7 +49,7 @@ if (true)
     for f=1:length(runs)
         in = load(runs(f));
 
-        unCut = find(in.out(4,:)<prctile(in.out(4,:),80));
+        unCut = find(in.out(4,:).^2/(thermAmp^2)/sqrt(length(in.out(4,:))) < 5);
 
         timFitin = [timFitin in.out(1,unCut)];
         Cin = [Cin detrend(in.out(2,unCut))];
@@ -66,7 +67,10 @@ if (true)
     inDEP = load('DarkEPData.csv');
     fDEP = inDEP(:,1);
     aDEP = inDEP(:,2);
-   
+
+    inLISA = load('LISA-PF.csv');
+    fLISA = inLISA(:,1);
+    aLISA = inLISA(:,2);     
 
     %% Uncertainty cuts
 
@@ -120,6 +124,7 @@ if (true)
 end
 
 lenDays = ceil((timFit(end)-timFit(1))/24/3600);
+
 %%
 
 torqFit = C+i*S;
@@ -140,13 +145,16 @@ thermPhi = linspace(0,2*pi,100);
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq));
 thermCirc = thermAmp*(cos(thermPhi)+i*sin(thermPhi))+mean(torqFit);
 
-%% Dark Matter Calcuations
+%% Fits
 
 amp1w = sqrt(C.^2+S.^2);
+% amp1w = amp*randn(length(C),1);
 
 sampFDM = sampF;
 
-dmFreq = linspace(1/24/3600,0.95*sampFDM/2,floor(sampFDM*24*3600*2));
+% numDaysFitDM = 10;
+
+dmFreq = linspace(1/24/3600/lenDays*2,0.85*sampFDM/2,floor(0.85*sampFDM*24*3600*lenDays/2));
 
 ampDMX = [];
 uncDMX = [];
@@ -157,13 +165,15 @@ uncDMY = [];
 ampDMZ = [];
 uncDMZ = [];
 
-numDaysFitDM = 1;
+
 
 for indexDM = 1:length(dmFreq)
     
     fFitDM = dmFreq(indexDM);
     wFit = 2*pi*fFitDM;
-    fitSamplesDM = floor(sampFDM/fFitDM);
+    fitSamplesDM = floor(sampFDM/fFitDM*(fFitDM*16/(dmFreq(end)-dmFreq(1))+1));
+%     fitSamplesDM = floor(lenDays*24*3600/5*sampFDM);
+%     fitSamplesDM = floor(sampFDM/fFitDM);
     
     CDMX = [];
     SDMX = [];
@@ -174,45 +184,53 @@ for indexDM = 1:length(dmFreq)
     CDMZ = [];
     SDMZ = [];
     
-    for index = 0:lenDays/numDaysFitDM
+%     for index = 0:lenDays/numDaysFitDM
+    for index = 0:floor(length(timFit)/fitSamplesDM)
         
-        indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFitDM)==index);
-
-        cut = timFit(indexCut)';
-
-        y = detrend(amp1w(indexCut))';        
-
-        if not(isempty(cut))
-            nPeriods = (cut(end)-cut(1))*fFitDM;
-
-            basisIndex = [];
-            for cutX = cut'
-                basisIndex = [basisIndex find(floor(timX-cutX/24/3600)==0,1)];
+%         indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFitDM)==index);
+        indexCut = (index*fitSamplesDM+1:(index+1)*fitSamplesDM+1);
+        
+        if indexCut(end)<length(timFit)
+            cut = timFit(indexCut)';
+    
+            y = P(indexCut).*detrend(amp1w(indexCut))';        
+    
+            if not(isempty(cut))
+                nPeriods = (cut(end)-cut(1))*fFitDM;
+    
+                basisIndex = [];
+                for cutX = cut'
+                    basisIndex = [basisIndex find(floor(timX-cutX/24/3600)==0,1)];
+                end
+    
+                if (inj2)
+                    y = y + injAmp*inX(basisIndex).*cos(wInj*cut+pi/4);
+                end
+               
+%                 x = [inX(basisIndex).*cos(wFit*cut) inX(basisIndex).*sin(wFit*cut)...
+%                     inY(basisIndex).*cos(wFit*cut) inY(basisIndex).*sin(wFit*cut)...
+%                     inZ(basisIndex).*cos(wFit*cut)/max(inZ) inZ(basisIndex).*sin(wFit*cut)/max(inZ)];  
+    
+                x = [inX(basisIndex).*cos(wFit*cut) inX(basisIndex).*sin(wFit*cut)...
+                    inY(basisIndex).*cos(wFit*cut) inY(basisIndex).*sin(wFit*cut)]; 
+                x = [inX(basisIndex).*cos(wFit*cut) inX(basisIndex).*sin(wFit*cut)...
+                    inY(basisIndex).*cos(wFit*cut) inY(basisIndex).*sin(wFit*cut)...
+                    0.7385.*cos(wFit*cut) 0.7385.*sin(wFit*cut)]; 
+%                   x = [inY(basisIndex).*cos(wFit*cut) inY(basisIndex).*sin(wFit*cut)];
+    
+                        
+                a = inv(x'*x)*x'*y;
+                if (and(and(a(1)~=0,a(2)~=0),nPeriods>=0))
+                    CDMX = [CDMX a(1)];
+                    SDMX = [SDMX a(2)];
+%     
+                    CDMY = [CDMY a(3)];
+                    SDMY = [SDMY a(4)];
+%     
+                    CDMZ = [CDMZ a(5)];
+                    SDMZ = [SDMZ a(6)];
+                end 
             end
-
-            if (inj2)
-                y = y + injAmp*inX(basisIndex).*cos(wInj*cut);
-            end
-           
-%             x = [inX(basisIndex).*cos(wFit*cut) inX(basisIndex).*sin(wFit*cut)...
-%                 inY(basisIndex).*cos(wFit*cut) inY(basisIndex).*sin(wFit*cut)...
-%                 inZ(basisIndex).*cos(wFit*cut) inZ(basisIndex).*sin(wFit*cut)];  
-
-            x = [inX(basisIndex).*cos(wFit*cut) inX(basisIndex).*sin(wFit*cut)...
-                inY(basisIndex).*cos(wFit*cut) inY(basisIndex).*sin(wFit*cut)]; 
-
-                    
-            a = inv(x'*x)*x'*y;
-            if (and(and(a(1)~=0,a(2)~=0),nPeriods>=2))
-                CDMX = [CDMX a(1)];
-                SDMX = [SDMX a(2)];
-
-                CDMY = [CDMY a(3)];
-                SDMY = [SDMY a(4)];
-
-%                 CDMZ = [CDMZ a(5)];
-%                 SDMZ = [SDMZ a(6)];
-            end 
         end
     
     end
@@ -236,6 +254,7 @@ uncDMY = aDM*uncDMY;
 
 ampDMZ = aDM*ampDMZ;
 uncDMZ = aDM*uncDMZ;
+
 
 %% Figures
 figure(4)
@@ -262,26 +281,67 @@ set(ll,'MarkerSize',16);
 % xlim([1e-5 1e0])
 grid on
 
-mF = logspace(-5,-2);
+mF = logspace(-7,-1.5);
 mA = mF*0+1e-25;
 
+proj = min([mF*0+7e-27; sqrt((4e-27*sqrt(1e-3)*1./sqrt(mF)).^2+ (1e-26/1e-1*mF).^2)]);
+
+f2M = 4.1e-19/1e-4;
+
 figure(10)
-l=loglog(dmFreq,ampDMX, dmFreq,ampDMY, dmFreq,ampDMZ, mF, mA, '--', fDEP, aDEP, '--');
-ylabel('$g_{ULDM}$','Interpreter', 'latex')
+t=tiledlayout(1,1);
+ax1=axes(t);
+set(ax1,'XLim',[min(dmFreq) max(dmFreq)]);
+loglog(ax1,f2M*mF, 0*mF)
+ax1.XTick=mF;
+ax1.YTick=[];
+ax1.XTickLabel=mF;
+ax1.XAxisLocation='top';
+set(gca,'FontSize',16);
+xlabel('Mass (eV)','Interpreter', 'latex')
+nAv=4;
+ax2=axes(t);
+l=loglog(ax2, dmFreq,movmean(ampDMX,nAv), dmFreq,movmean(ampDMY,nAv), dmFreq,movmean(ampDMZ,nAv),...    
+    mF, mA, '--', fDEP, aDEP, '--', fLISA,aLISA,'--');%, [TTFreq/4 TTFreq/4], [1e-28 1e-23],'k-.');
+ylabel('$g_{B-L}$','Interpreter', 'latex')
 xlabel('Frequency (Hz)','Interpreter', 'latex')
-legend('Data X', 'Data Y', 'Data Z', 'MICROSCOPE','DarkEP','Raw Torq Limits','Interpreter', 'latex')
+legend('Limits X', 'Limits Y', 'Limit Z','MICROSCOPE','DarkEP','LISA Pathfinder','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'LineWidth',1.5);
-ylim([5e-27 5e-24])
-xlim([1e-5 1e-3])
+ylim([1e-27 5e-24])
+xlim([min(mF) max(mF)])
 grid on
+text(2e-5,3e-24, 'Nyquist Frequency','Interpreter', 'latex','FontSize',16)
 
+figure(11)
+t=tiledlayout(1,1);
+ax1=axes(t);
+% set(ax1,'XLim',[min(dmFreq) max(dmFreq)]);
+loglog(ax1,mF, 0*mF)
+% ax1.XTick=mF;
+ax1.YTick=[];
+% ax1.XTickLabel=mF;
+ax1.XAxisLocation='top';
+set(gca,'FontSize',16);
+xlabel('Frequency (Hz)','Interpreter', 'latex')
 
+ax2=axes(t);
+l=loglog(ax2, f2M*dmFreq,movmean(ampDMX,4), f2M*dmFreq,movmean(ampDMY,4), f2M*dmFreq,movmean(ampDMZ,4),...    
+    f2M*mF, mA, '--', f2M*fDEP, aDEP, '--', f2M*fLISA,aLISA,'--');%,f2M*mF, proj,'-.');%, f2M*[TTFreq/2 TTFreq/2], [1e-28 1e-23],'k-.');
+ylabel('$g_{B-L}$','Interpreter', 'latex')
+xlabel('Mass (eV)','Interpreter', 'latex')
+legend('X-Limits', 'Y-Limits', 'Z-Limits', 'MICROSCOPE','Stationary Limits','LISA Pathfinder','Projected Improvements','Interpreter', 'latex')
+set(gca,'FontSize',16);
+set(l,'LineWidth',1.5);
+ylim([4e-28 1e-24])
+xlim(f2M*[min(mF) max(mF)])
+grid on
+% text(2e-19,3e-24, 'Turntable Frequency/2','Interpreter', 'latex','FontSize',16)
 
 %%
 if(false)
 
-    fig2=figure(10);
+    fig2=figure(11);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])

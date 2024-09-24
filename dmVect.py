@@ -83,7 +83,7 @@ for dayNum in days:
 	dateTime = datetime.fromtimestamp(timeStamp)
 	print(dayNum)
 
-	zGeo=SkyCoord(ra=0*u.degree, dec=90*u.degree, frame='gcrs')
+	zGeo=SkyCoord(ra=90*u.degree, dec=90*u.degree, frame='gcrs')
 	zLocal=zGeo.transform_to(AltAz(obstime=dateTime,location=Seattle))
 
 	zAlt=zLocal.alt.deg
