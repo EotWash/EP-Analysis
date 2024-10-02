@@ -17,6 +17,9 @@ wTT = 2*pi*TTFreq; % Turn table frequency (rad*Hz)
 
 aDM = 1e-25/9.73e-19; % Torque to g_dm conversion for Be-Al
 
+% Thermal noise
+thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
+
 %% Injection Controls
 
 injAmp = 1e-24/aDM;
@@ -32,7 +35,7 @@ if (true)
     % and misfit are calculated in NewWashAnalysis.m then loaded here
     runs = ["run6875Fits.mat" "run6891Fits.mat" "run6893Fits.mat" ...
         "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
-        "run6903Fits.mat" "run6904Fits.mat"];
+        "run6903Fits.mat" "run6904Fits.mat" "run6905Fits.mat"];
 
     timFitin =[];
     Cin = [];
@@ -139,9 +142,6 @@ daySamples = floor(sampF/fDay); % Samples in a day
 lenMin = 0.75*24*3600*TTFreq/2; % Minimum length of cut (samples)
 numDaysFit = 2; % Length of cuts (days)
 
-% Thermal noise
-thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
-
 % Thermal noise circle
 thermPhi = linspace(0,2*pi,100); 
 thermCirc = thermAmp*(cos(thermPhi)+i*sin(thermPhi))+mean(torqFit);
@@ -152,7 +152,7 @@ thermCirc = thermAmp*(cos(thermPhi)+i*sin(thermPhi))+mean(torqFit);
 amp1w = sqrt(C.^2+S.^2);
 
 % Dark matter search frequencies
-dmFreq = linspace(1/24/3600/lenDays*2,0.85*sampF/2,floor(0.85*sampF*24*3600*lenDays/2));
+dmFreq = linspace(1/24/3600/lenDays*2,0.85*sampF/2,floor(0.85*sampF*24*3600*lenDays/2))';
 
 % Create vectors
 ampDMX = [];
@@ -235,6 +235,7 @@ for indexDM = 1:length(dmFreq)
     uncDMY = [uncDMY; 1/sqrt(mean(CDMY)^2+mean(SDMY)^2)*sqrt(mean(CDMY)^2*std(CDMY)^2+mean(SDMY)^2*std(SDMY)^2)/sqrt(length(CDMY))];
     ampDMZ = [ampDMZ; sqrt(mean(CDMZ)^2+mean(SDMZ)^2)];
     uncDMZ = [uncDMZ; 1/sqrt(mean(CDMZ)^2+mean(SDMZ)^2)*sqrt(mean(CDMZ)^2*std(CDMZ)^2+mean(SDMZ)^2*std(SDMZ)^2)/sqrt(length(CDMZ))];
+
 end
 
 % Convert to g_B-L units
@@ -250,62 +251,54 @@ uncDMZ = aDM*uncDMZ;
 
 % Time Series
 figure(1)
-l=plot(timFitin/3600/24, sqrt(Cin.^2+Sin.^2)*1e15,'.');
-hold on
-ll=plot(timFit/3600/24, abs(torqFit)*1e15,'.');
-hold off
+% l=plot(timFitin/3600/24, sqrt(Cin.^2+Sin.^2)*1e15,'.');
+% hold on
+ll=plot(timFit/3600/24, detrend(abs(torqFit))*1e15,'.');
+% hold off
 ylabel('Torque (fN m)','Interpreter', 'latex')
 xlabel('Time (days)','Interpreter', 'latex')
-legend('Before Cuts','After Cuts','Interpreter', 'latex')
+% legend('Before Cuts','After Cuts','Interpreter', 'latex')
 set(gca,'FontSize',16);
-set(l,'MarkerSize',16);
 set(ll,'MarkerSize',16);
 grid on
 
-% Limits frequency x-axis
+% Limits mass x-axis
 figure(2)
-mF = logspace(-7,-1.5);
-mA = mF*0+1e-25;
-proj = min([mF*0+7e-27; sqrt((4e-27*sqrt(1e-3)*1./sqrt(mF)).^2+ (1e-26/1e-1*mF).^2)]);
-f2M = 4.1e-19/1e-4;
-t=tiledlayout(1,1);
-ax1=axes(t);
-set(ax1,'XLim',[min(dmFreq) max(dmFreq)]);
-loglog(ax1,f2M*mF, 0*mF)
-ax1.XTick=mF;
-ax1.YTick=[];
-ax1.XTickLabel=mF;
-ax1.XAxisLocation='top';
-set(gca,'FontSize',16);
-xlabel('Mass (eV)','Interpreter', 'latex')
-nAv=4;
-ax2=axes(t);
-l=loglog(ax2, dmFreq,movmean(ampDMX,nAv), dmFreq,movmean(ampDMY,nAv), dmFreq,movmean(ampDMZ,nAv),...    
-    mF, mA, '--', fDEP, aDEP, '--', fLISA,aLISA,'--');%, [TTFreq/4 TTFreq/4], [1e-28 1e-23],'k-.');
+l=loglog(dmFreq,uncDMX, dmFreq, uncDMY, dmFreq,uncDMZ);
 ylabel('$g_{B-L}$','Interpreter', 'latex')
 xlabel('Frequency (Hz)','Interpreter', 'latex')
-legend('Limits X', 'Limits Y', 'Limit Z','MICROSCOPE','DarkEP','LISA Pathfinder','Interpreter', 'latex')
+legend('X-Limits', 'Y-Limits', 'Z-Limits', 'MICROSCOPE','Shaw et. al.','LISA Pathfinder','Projected Improvements','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'LineWidth',1.5);
-ylim([1e-27 5e-24])
-xlim([min(mF) max(mF)])
+ylim([4e-28 1e-24])
 grid on
 
 % Limits mass x-axis
+mF = logspace(-7,-1.5);
+mA = mF*0+1e-25;
+proj = min([mF*0+7e-27; sqrt((4e-27*sqrt(1e-3)*1./sqrt(mF)).^2+ (1e-26/1e-1*mF).^2)]);
+dmAmp = sqrt(uncDMX.^2 + uncDMY.^2 + uncDMZ.^2)/sqrt(3);
+f2M = 4.1e-19/1e-4;
+
+dmIndex = find(and(not(isnan(dmAmp)), dmAmp>0));
+dmAmpPlot = dmAmp(dmIndex)';
+dmFreqPlot = dmFreq(dmIndex)';
+
+lIndex = find(f2M*fLISA<2.2e-17);
+aLISAPlot = aLISA(lIndex)';
+fLISAPlot = fLISA(lIndex)';
+
 figure(3)
-t=tiledlayout(1,1);
-ax1=axes(t);
-loglog(ax1,mF, 0*mF)
-ax1.YTick=[];
-ax1.XAxisLocation='top';
-set(gca,'FontSize',16);
-xlabel('Frequency (Hz)','Interpreter', 'latex')
-ax2=axes(t);
-l=loglog(ax2, f2M*dmFreq,movmean(ampDMX,4), f2M*dmFreq,movmean(ampDMY,4), f2M*dmFreq,movmean(ampDMZ,4),...    
+l=loglog(f2M*dmFreq, dmAmp,...    
     f2M*mF, mA, '--', f2M*fDEP, aDEP, '--', f2M*fLISA,aLISA,'--');%,f2M*mF, proj,'-.');%, f2M*[TTFreq/2 TTFreq/2], [1e-28 1e-23],'k-.');
+hold on
+patch([f2M*mF fliplr(f2M*mF)], [mA 1e-24*ones(size(mA))], [.7 .7 .7], 'LineStyle', 'none', 'FaceAlpha', 0.5) 
+patch([f2M*fLISAPlot fliplr(f2M*fLISAPlot)], [aLISAPlot 1e-25*ones(size(aLISAPlot))], [.7 .7 .7], 'LineStyle', 'none', 'FaceAlpha', 0.5)
+patch([f2M*dmFreqPlot fliplr(f2M*dmFreqPlot)], [dmAmpPlot 1e-25*ones(size(dmAmpPlot))], [.7 .7 .7], 'LineStyle', 'none', 'FaceAlpha', 0.5)
+hold off
 ylabel('$g_{B-L}$','Interpreter', 'latex')
 xlabel('Mass (eV)','Interpreter', 'latex')
-legend('X-Limits', 'Y-Limits', 'Z-Limits', 'MICROSCOPE','Stationary Limits','LISA Pathfinder','Projected Improvements','Interpreter', 'latex')
+legend('Amplitude Limits', 'MICROSCOPE','Shaw et. al.','LISA Pathfinder','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'LineWidth',1.5);
 ylim([4e-28 1e-24])
@@ -314,12 +307,24 @@ grid on
 
 %% Save plots
 
-if(false)
+if(true)
 
-    fig2=figure(11);
+    fig2=figure(2);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'ULDM_MultiRun.pdf','-dpdf','-r1200')
+    print(fig2,'ULDM_Limits.pdf','-dpdf','-r1200')
+
+    fig2=figure(3);
+    set(fig2,'Units','Inches');
+    pos = get(fig2,'Position');
+    set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    print(fig2,'ULDM_AmpLimits.pdf','-dpdf','-r1200')
+
+    fig2=figure(1);
+    set(fig2,'Units','Inches');
+    pos = get(fig2,'Position');
+    set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    print(fig2,'ULDM_TimeSeries.pdf','-dpdf','-r1200')
 
 end

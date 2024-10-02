@@ -16,7 +16,7 @@ TTFreq = 0.457120e-3; % Turn table frequency (Hz)
 if (false)
     
     % Run number
-    run = ['run6904'];
+    run = ['run6905'];
 
     % Load vectors form tdms
     inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
@@ -82,6 +82,10 @@ nAv = 1;
 
 %% Themal Limit
 
+w = 2*pi*F;
+
+R = 1./(1-w.^2/w0.^2-i/Q)/kappa; %% Torq to Angle Response
+
 thermT = abs(sqrt(4*kb*T*(kappa/Q).*(1./w)));
 thermA = abs(R.*thermT);
 
@@ -142,7 +146,7 @@ end
 
 %% Save fit amplitudes
 
-if (false)
+if (true)
     out = [timFit+inTim(1); C; S; U];
     save([run 'Fits.mat'],'out')
 end

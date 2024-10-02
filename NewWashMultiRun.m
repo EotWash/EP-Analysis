@@ -22,6 +22,9 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 TTFreq = 0.457120e-3; % Turn table frequency (Hz)
 
+% Thermal noise
+thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
+
 %% Injection Controls
 
 injAmp = 20e-5*(r*m*aGalaxy);
@@ -36,7 +39,7 @@ if (true)
     % and misfit are calculated in NewWashAnalysis.m then loaded here
     runs = ["run6875Fits.mat" "run6891Fits.mat" "run6893Fits.mat" ...
         "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
-        "run6903Fits.mat" "run6904Fits.mat"];
+        "run6903Fits.mat" "run6904Fits.mat" "run6905Fits.mat"];
 
     timFitin =[];
     Cin = [];
@@ -125,9 +128,6 @@ wDay = 2*pi*fDay; % Daily frequency (rad*Hz)
 daySamples = floor(sampF/fDay); % Samples in a day
 lenMin = 0.75*24*3600*TTFreq/2; % Minimum length of cut (samples)
 numDaysFit = 2; % Length of cuts (days)
-
-% Thermal noise
-thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
 
 % Thermal noise circle
 thermPhi = linspace(0,2*pi,100); 
@@ -380,8 +380,8 @@ set(gca,'FontSize',16);
 set(l,'MarkerSize',18);
 set(ll,'LineWidth',2);
 set(ll,'MarkerSize',12);
-ylim([-15 15])
-xlim([-15 15])
+ylim([-12 12])
+xlim([-12 12])
 grid on
 
 %% Save plots
