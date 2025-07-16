@@ -2,21 +2,24 @@ warning('off')
 
 %% Parameters
 
-w0 = 2*pi*6.8944e-4; % Resonant frequency (rad*Hz)
+% w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
+w0 = 2*pi/1461;
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-Q = 2e5; % Quality factor
+% Q = 2.89e5; % Quality factor
+Q = 1.1e5;
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
 thetaCalib = 3/300/8; % Autocollimator calibration (rad/(Diff/Sum))
-TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+% TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+TTFreq = 0.4568e-3;
 
 %% Data loading
 
-if (false)
+if (true)
     
     % Run number
-    run = ['run6905'];
+    run = ['run6964'];
 
     % Load vectors form tdms
     inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
@@ -43,8 +46,10 @@ inTheta = thetaCalib*inDiff./inSum;
 sampF = 1/(inTim(2)-inTim(1));
 
 % Time indices
+% startIndex = 2*24*3600;
 startIndex = 1e1;
-endIndex = length(inTTAngle);
+endIndex =length(inTTAngle);
+% endIndex = 3.09*24*3600;
 
 % Cut vectors
 tim = (startIndex:endIndex)*sampF;
@@ -140,7 +145,7 @@ for index = 0:floor(length(tFit)/fitSamples)-1
     U = [U std(a'*x'-y')];
     
     % Time stamp
-    timFit = [timFit mean(timFilt(index*fitSamples+1:(index+1)*fitSamples+1))];
+    timFit = [timFit mean(cut)];
 
 end
 
@@ -166,7 +171,7 @@ if (true)
 
     % Angle time series
     figure(1)
-    l=plot(tim,theta);
+    l=plot(tim,inDiff(startIndex:endIndex));
     ylabel('Angle (rad)','Interpreter', 'latex')
     xlabel('Time (s)','Interpreter', 'latex')
     set(gca,'FontSize',16);
@@ -175,7 +180,7 @@ if (true)
     
     % Torque time series
     figure(2)
-    l=plot(timFilt, torqFilt);
+    l=plot(tFit, tqFit);
     ylabel('Torque (N m)','Interpreter', 'latex')
     xlabel('Time (days)','Interpreter', 'latex')
     set(gca,'FontSize',16);
@@ -215,8 +220,8 @@ if (true)
     set(gca,'FontSize',16);
     set(l,'MarkerSize',16);
     set(l,'LineWidth',1.5);
-    ylim([-0.2 0.2])
-    xlim([-0.2 0.2])
+%     ylim([-0.2 0.2])
+%     xlim([-0.2 0.2])
     grid on
     
     % Fit amplitude time series
