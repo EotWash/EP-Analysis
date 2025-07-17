@@ -171,7 +171,8 @@ for injIndex = 1:length(inj)
         % Sync basis function and data 
         galIndex = [];
         for cutGal = cut
-            galIndex = [galIndex find(floor(timGal-cutGal/24/3600)==0,1)];
+            [m,minI] = min(abs(timGal-cutGal/24/3600));
+            galIndex = [galIndex minI];
         end
 
         % Amplitude injection

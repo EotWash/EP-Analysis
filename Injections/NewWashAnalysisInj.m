@@ -62,9 +62,9 @@ end
 
 w = 2*pi*TTFreq;
 
-R = 1./(1-w.^2/w0.^2+i/Q)/kappa; %% Torq to Angle Response
+RTT = 1./(1-w.^2/w0.^2+i/Q)/kappa; %% Torq to Angle Response
 
-injAmpRaw = 1e-3*(r*m*aGalaxy)*abs(R);
+injAmpRaw = 1e-3*(r*m*aGalaxy)*abs(RTT);
 
 stTimeC = find(floor(abs(timGal-(mod(min(inTim),31556926)+31556926)/24/3600))==0,1);
 stTimeS = find(floor(abs(timGal+0.2493-(mod(min(inTim),31556926)+31556926)/24/3600))==0,1);
@@ -75,7 +75,7 @@ reInGal = resample(inGal,floor(1/galSamp),1);
 reOutGal = resample(outGal,floor(1/galSamp),1);
 inj = injAmpRaw*(reInGal(stTimeC:stTimeC+length(inTim)-1)+10).*(cos(2*pi*TTFreq*(0.152/TTFreq+(1:length(inTim))))')...
     +injAmpRaw*(reInGal(stTimeS:stTimeS+length(inTim)-1)+10).*(sin(2*pi*TTFreq*(0.152/TTFreq+(1:length(inTim))))')...
-    +randn(length(inTim),1)*thermAmp*abs(R)*0;
+    +randn(length(inTim),1)*thermAmp*abs(RTT)*0;
 
 %% Calibration
 
