@@ -51,13 +51,7 @@ if (true)
 
     % Runs to load. Once per turntable cosine amplitude, sine amplitude, 
     % and misfit are calculated in NewWashAnalysis.m then loaded here
-    runs = ["run6891Fits.mat" "run6893Fits.mat" ...
-       "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
-        "run6903Fits.mat" "run6904Fits.mat" "run6905Fits.mat" "run6923Fits.mat" ...
-        "run6925Fits.mat" "run6926Fits.mat" "run6927Fits.mat" "run6930Fits.mat"...
-        "run6931Fits.mat" "run6936Fits.mat" "run6939Fits.mat" "run6949Fits.mat"...
-        "run6950Fits.mat" "run6954Fits.mat" "run6955Fits.mat" "run6956Fits.mat"...
-        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat"];
+    runs = ["run6964FitsInj.mat"];
 
     timFitin =[];
     Cin = [];
@@ -68,7 +62,7 @@ if (true)
 
     for f=1:length(runs)
         
-        in = load("Fits\"+runs(f));        
+        in = load(runs(f));        
 
         % Chi-squared cut        
         unCut = find(in.out(4,:)/thermAmp < thresh);
@@ -87,11 +81,8 @@ if (true)
         Uraw = [Uraw in.out(4,:)/thermAmp];
         
         % Pendulum flips
-        if or(f<3,and(f>13,f<20))
-            Pin = [Pin in.out(4,unCut)*0+1];
-        else 
-            Pin = [Pin in.out(4,unCut)*0-1];
-        end
+        Pin = [Pin in.out(4,unCut)*0+1];
+        
     end
 
     %% 2-sigma cuts
@@ -99,6 +90,7 @@ if (true)
     % Cosine cut
     unCut = find(and(and(Cin>prctile(Cin,5),Cin<prctile(Cin,95)),...
         and(Sin>prctile(Sin,5),Sin<prctile(Sin,95))));
+%     unCut = find(Cin~=0);
     C = Cin(unCut);
     S = Sin(unCut);
     U = Uin(unCut);
@@ -111,9 +103,10 @@ if (true)
     % Loading in galaxy basis funtions outputted from galVect.py
     rawGal=load('Basis Functions\galVectMin.out');
     galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
-    timGal=decimate(rawGal(:,1),floor(galSampF/sampF));
-    inGal=(decimate(rawGal(:,2),floor(galSampF/sampF)));
-    outGal=detrend(decimate(rawGal(:,3),floor(galSampF/sampF)));
+    timGal=resample(rawGal(:,1),1,ceil(galSampF/sampF));
+    inGal=resample(rawGal(:,2),1,ceil(galSampF/sampF));
+    outGal=detrend(resample(rawGal(:,3),1,ceil(galSampF/sampF)));
+%     outGal = max(inGal)/max(outGal)*outGal;
 
     timGal = timGal - (timGal>307.042)/24 - (timGal<69.082)/24 - (timGal<433.041)/24 - (timGal>671.041)/24;
 
@@ -166,12 +159,15 @@ for index = 0:lenDays/numDaysFit
 
     % Find cut indices
     indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFit)==index);
+%     indexCut = find(and((timFit-timFit(1))>=index*numDaysFit*24*3600,...
+%         (timFit-timFit(1))<(index+1)*numDaysFit*24*3600));
+%     indexCut = (index*daySamples*numDaysFit+1:(index+1)*daySamples*numDaysFit+1);
 
     % Cut vectors
     cut = timFit(indexCut);
     pol = sign(mean(P(indexCut)));
     u = U(indexCut);
-    y = torqFit(indexCut)-mean(torqFit(indexCut));
+    y = torqFit(indexCut);
 
     % Amplitude injection
     if (inj2)
@@ -185,16 +181,16 @@ for index = 0:lenDays/numDaysFit
     if not(isempty(cut))   
         if (length(y)>=lenMin)
 
-            % Sync basis function and data 
+%             % Sync basis function and data 
             galIndex = [];
             for cutGal = cut
-%                 galIndex = [galIndex find(floor(timGal-cutGal/24/3600)==0,1)];
-                [m,minI] = min(abs(timGal-cutGal/24/3600));
-                galIndex = [galIndex minI];
+                [m,I]min(abs(timGal-cutGal/24/3600));
+                galIndex = [galIndex find(floor(abs(timGal-cutGal/24/3600))==0,1)];
             end
-            
+%             
             % Design matrix
             x = [inGal(galIndex)+i*outGal(galIndex)];
+%             x = [inGal(galIndex)+i*outGal(galIndex) (1+i)+0*galIndex'];
             
             % Long basis functions for plotting 
             galLongIndex = find(and(timGal>=(index*numDaysFit+timFit(1)/24/3600),...
@@ -202,9 +198,15 @@ for index = 0:lenDays/numDaysFit
             xLong = [inGal(galLongIndex)+i*outGal(galLongIndex)];
 
             if not(isempty(x))
-
+               
                 % Linear least squares fitting to basis functions
                 a = inv(x'*x)*x'*y';
+
+                figure(index+100)
+                plot(cut,real(y))
+                hold on
+                plot(cut,real(a'*x'))
+                hold off
             
                 % Append valid data points
                 if ((a(1)~=0))
@@ -212,9 +214,10 @@ for index = 0:lenDays/numDaysFit
                     sGal = [sGal imag(a(1))];
                     uGal = [uGal std(a'*x'-y)];
                     timGalFit = [timGalFit; timGal(galLongIndex)];
-                    longFit = [longFit (a'*xLong')-mean(a'*xLong')];
+                    longFit = [longFit (real(a'*xLong'))];
                     longTim = [longTim timFit(indexCut)];
-                    longDat = [longDat (real(y)+imag(y))/2];
+%                     longDat = [longDat (real(y)+imag(y))/2];
+                    longDat = [longDat real(y)];
                     longU = [longU u];
         
                     % Add nans to long to allow gaps in plots
@@ -282,7 +285,7 @@ xlabel('Time (days)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',2);
-ylim([-80 80])
+% ylim([-80 80])
 xlim([0.99*min(longTim/3600/24) 1.01*max(longTim/3600/24)])
 legend('Data','Fit','Interpreter', 'latex')
 grid on
@@ -331,10 +334,10 @@ set(gca,'FontSize',16);
 set(l,'MarkerSize',18);
 set(ll,'LineWidth',2);
 set(ll,'MarkerSize',12);
-ylim([-30 30])
-xlim([-30 30])
-set(gca,'XTick',x)
-set(gca,'YTick',x)
+ylim([-3e1 3e1])
+xlim([-3e1 3e1])
+% set(gca,'XTick',x)
+% set(gca,'YTick',x)
 
 grid on
 
@@ -363,7 +366,7 @@ set(gca,'FontSize',16);
 grid on
 %%
 figure(6)
-ll = plot(uncT*2, uncGalT, linspace(0,200), thermAmp/(r*m*aGalaxy)/sqrt(24*3600*TTFreq/numDaysFit/3)./sqrt(linspace(0,200)),...
+ll = plot(uncT*2, uncGalT, linspace(0,200), thermAmp/(r*m*aGalaxy)/sqrt(24*3600*TTFreq/numDaysFit/2)./sqrt(linspace(0,200)),...
     [0 200], [1.3e-5 1.3e-5],'--');
 % xlim([-4 4]*1e-25)
 xlabel('Number of Days','Interpreter', 'latex')
@@ -373,6 +376,9 @@ set(gca,'FontSize',16);
 set(ll,'LineWidth',2);
 ylim([0 4e-5])
 grid on
+
+figure(7)
+plot(timFitin,Cin,timFitin,Sin)
 
 %% Save plots
 

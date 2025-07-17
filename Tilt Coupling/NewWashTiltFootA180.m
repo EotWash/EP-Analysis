@@ -19,7 +19,7 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 if (false)
     
     % Run number
-    run = ['run6972'];
+    run = ['run6973'];
 
     % Load vectors form tdms
     inDiff = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
@@ -49,9 +49,9 @@ sampF = 1/(inTim(2)-inTim(1));
 
 % Time indices
 % startIndex = 1;
-% endIndex = length(inTim);
-startIndex = 0.6e4;
-endIndex = 4e4;
+endIndex = length(inTim);
+startIndex = 1.45e4;
+endIndex = 7.8e4;
 
 % Cut vectors
 tim = (startIndex:endIndex)*sampF;
