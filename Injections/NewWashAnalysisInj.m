@@ -1,29 +1,66 @@
 warning('off')
 
-%% Parameters
+injEx = [];
+injUnc = [];
 
-% w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
-w0 = 2*pi/1461;
-I = 3.78e-5; % Moment of inertia (kg-m^2)
-% Q = 2.89e5; % Quality factor
-Q = 1.1e5;
-kappa = I*w0^2; % Spring constance (N m/rad)
-kb = 1.38064852e-23; % Boltzmann's constant (J/K)
-T = 293; % Temperature (K)
-thetaCalib = 3/300/8; % Autocollimator calibration (rad/(Diff/Sum))
-% TTFreq = 0.457120e-3; % Turn table frequency (Hz)
-TTFreq = 0.4568e-3;
+injA = linspace(-1,1,21)*1e-4;
 
-m = 38.72e-3/2; % Mass (kg)
-r = 3.77e-2/2; % Lever-arm (m)
-aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
+% injA = -3e-3;
 
-sidDay = 86164.0905; % Sidereal day (s)
+for injIndex = 1:length(injA)    
 
-thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq));
+    %% Parameters
+    
+    % w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
+    w0 = 2*pi/1461;
+    I = 3.78e-5; % Moment of inertia (kg-m^2)
+    % Q = 2.89e5; % Quality factor
+    Q = 1.1e5;
+    kappa = I*w0^2; % Spring constance (N m/rad)
+    kb = 1.38064852e-23; % Boltzmann's constant (J/K)
+    T = 293; % Temperature (K)
+    thetaCalib = 3/300/8; % Autocollimator calibration (rad/(Diff/Sum))
+    % TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+    TTFreq = 0.4568e-3;
+    
+    m = 38.72e-3/2; % Mass (kg)
+    r = 3.77e-2/2; % Lever-arm (m)
+    aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
+    
+    sidDay = 86164.0905; % Sidereal day (s)
+    
+    thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq));
+    
+    %% Data loading
+    
+    if (false)
+        
+        % Run number
+        run = ['run6964'];
+    
+        % Load vectors form tdms
+        inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
+        inDiff = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
+        inSum = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Sum");
+        inTim = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Time");
+        inCycle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="CycleMark");
+       
+        % Flatten vectors
+        inTTAngle = table2array(inTTAngle{1});
+        inDiff = table2array(inDiff{1});
+        inSum = table2array(inSum{1});
+        inTim = table2array(inTim{1});
+        inCycle = table2array(inCycle{1});
+        
+    end
+    
+    %% Injection
+    
+    w = 2*pi*TTFreq;
+    
+    RTT = 1./(1-w.^2/w0.^2+i/Q)/kappa; %% Torq to Angle Response
 
- % Loading in galaxy basis funtions outputted from galVect.py
-if(true)
+    % Loading in galaxy basis funtions outputted from galVect.py
 
     rawGal=load('Basis Functions\galVectMin.out');
     galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
@@ -32,46 +69,7 @@ if(true)
     outGal=detrend(rawGal(:,3));
     
     timGal = timGal - (timGal>307.042)/24 - (timGal<69.082)/24 - (timGal<433.041)/24 - (timGal>671.041)/24;
-    
-end
-
-%% Data loading
-
-if (false)
-    
-    % Run number
-    run = ['run6964'];
-
-    % Load vectors form tdms
-    inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
-    inDiff = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
-    inSum = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Sum");
-    inTim = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Time");
-    inCycle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="CycleMark");
    
-    % Flatten vectors
-    inTTAngle = table2array(inTTAngle{1});
-    inDiff = table2array(inDiff{1});
-    inSum = table2array(inSum{1});
-    inTim = table2array(inTim{1});
-    inCycle = table2array(inCycle{1});
-    
-end
-
-%% Injection
-
-w = 2*pi*TTFreq;
-
-RTT = 1./(1-w.^2/w0.^2+i/Q)/kappa; %% Torq to Angle Response
-
-injEx = [];
-injUnc = [];
-
-injA = linspace(-1,1,21)*1e-2;
-
-
-for injIndex = 1:length(injA)
-
     injAmpRaw = injA(injIndex)*(r*m*aGalaxy)*abs(RTT);
     
     stTimeC = find(floor(abs(timGal-(mod(min(inTim),31556926)+31556926)/24/3600))==0,1);
@@ -229,28 +227,28 @@ end
 figure(1)
 ll = errorbar(injA*1e5, injEx*1e5, injUnc*1e5,'.');
 hold on
-l = plot(injA*1e5,injA*1e5+5.6e-1);
+l = plot(injA*1e5,injA*1e5);
 hold off
 xlabel('$\eta \times 10^{-5}$ Injected','Interpreter', 'latex')
 ylabel('$\eta \times 10^{-5}$ Recovered','Interpreter', 'latex')
-legend('Injections', 'Unity Slope, Offset $\eta=5.6\times10^{-6}$','Interpreter', 'latex')
+legend('Injections', 'Unity Slope','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(ll,'LineWidth',2);
 set(ll,'MarkerSize',16);
 set(l,'LineWidth',2);
 grid on
-% xlim([-10 10])
-% ylim([-10 10])
+xlim([-10 10])
+ylim([-10 10])
 xticks(injA*1e5)
 yticks(injA*1e5)
 
 %% Save plots
 
-if(false)
+if(true)
     fig2=figure(1);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'EP_Injection.pdf','-dpdf','-r1200')
+    print(fig2,'EP_StartInjectionData.pdf','-dpdf','-r1200')
     
 end

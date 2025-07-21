@@ -20,7 +20,6 @@ Rsun = 149.6e9; % Radius from earth to sun (m)
 aSun = G*Msun/Rsun^2; % Acceleration towards sun (m/s^2)
 aEarth = 1.68e-2; % Acceleration towards center of Earth (m/s^2)
 aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
-% aGalaxy =  9.7e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 sidDay = 86164.0905; % Sidereal day (s)
 
@@ -28,19 +27,6 @@ TTFreq = 0.457120e-3; % Turn table frequency (Hz)
 
 % Thermal noise
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
-
-% %% Injection Controls
-% inj = [];
-% injEx = [];
-% injUnc = [];
-
-% inj = [inj injAmp/(r*m*aGalaxy)];
-% injEx = [injEx etaGalaxy];
-% injUnc = [injUnc etaGalaxyUnc];
-
-injAmp = 10e-5*(r*m*aGalaxy);
-inj1 = false; % Quadrature injection
-inj2 = false; % Amplitude injection
 
 % Chi-squared threshold
 thresh = 7;

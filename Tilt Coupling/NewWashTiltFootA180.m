@@ -16,7 +16,7 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 %% Data loading
 
-if (false)
+if (true)
     
     % Run number
     run = ['run6973'];
@@ -181,7 +181,7 @@ ylabel('Torque (N m/$\sqrt{Hz}$)','Interpreter', 'latex')
 xlabel('Frequency (Hz)','Interpreter', 'latex')
 text(1.5e-4,8e-14,['Tilt Coupling: ' num2str(abs(mu)/kappa*100,2) ' +- ' num2str(un/kappa*100,2) ' %'],'FontSize',16,'Interpreter', 'latex')
 legend('Data', 'AGI 1', 'TT Frequency','Resonance','Thermal','Interpreter', 'latex')
-title('Tilt Injection Foot A','Interpreter', 'latex')
+title('Tilt Injection Foot A 180','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'LineWidth',1.5);
 ylim([1e-19 1e-12])
@@ -205,7 +205,7 @@ if (true)
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'EP_TiltInjFootA.pdf','-dpdf','-r1200')
+    print(fig2,'EP_TiltInjFootA180.pdf','-dpdf','-r1200')
 
 end
 
