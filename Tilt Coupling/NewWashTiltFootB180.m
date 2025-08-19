@@ -16,7 +16,7 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 %% Data loading
 
-if (false)
+if (true)
     
     % Run number
     run = ['run6974'];
@@ -198,6 +198,19 @@ set(l,'LineWidth',1.5);
 % xlim([-0.25 0.25])
 % ylim([-0.25 0.25])
 grid on
+%%
+% Torque ASD
+figure(6)
+l=loglog(Fff,Aff/r/m,Fm,Am*abs(mu)/r/m,[TTFreq TTFreq], [1e-19 1e-12],'--',[w0/2/pi w0/2/pi], [1e-19 1e-12],'--');
+ylabel('Acceleration (m/s$^2$/$\sqrt{Hz}$)','Interpreter', 'latex')
+xlabel('Frequency (Hz)','Interpreter', 'latex')
+legend('Data', 'Coupling $\times$ Tilt', 'TT Frequency','Resonance','Thermal','Interpreter', 'latex')
+set(gca,'FontSize',16);
+set(l,'LineWidth',1.5);
+ylim([1e-15 1e-9])
+xlim([5e-5 5e-3])
+grid on
+
 
     %%
 if (true)

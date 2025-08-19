@@ -4,6 +4,7 @@ injEx = [];
 injUnc = [];
 
 injA = linspace(-1,1,21)*1e-4;
+% injA = linspace(-1,1,5)*1e-4;
 
 % injA = -3e-3;
 
@@ -62,7 +63,7 @@ for injIndex = 1:length(injA)
 
     % Loading in galaxy basis funtions outputted from galVect.py
 
-    rawGal=load('Basis Functions\galVectMin.out');
+    rawGal=load('Basis Functions\galVectMin0Deg.out');
     galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
     timGal=(rawGal(:,1));
     inGal=detrend(rawGal(:,2));
@@ -239,8 +240,8 @@ set(l,'LineWidth',2);
 grid on
 xlim([-10 10])
 ylim([-10 10])
-xticks(injA*1e5)
-yticks(injA*1e5)
+% xticks(injA*1e5)
+% yticks(injA*1e5)
 
 %% Save plots
 

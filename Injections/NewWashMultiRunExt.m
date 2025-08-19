@@ -87,7 +87,7 @@ if (true)
     sampF = 1/(timFit(5)-timFit(4));
 
     % Loading in galaxy basis funtions outputted from galVect.py
-    rawGal=load('Basis Functions\galVectMin.out');
+    rawGal=load('Basis Functions\galVectMin0Deg.out');
     galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
     timGal=resample(rawGal(:,1),1,ceil(galSampF/sampF));
     inGal=resample(rawGal(:,2),1,ceil(galSampF/sampF));
@@ -105,7 +105,7 @@ lenDays = ceil((timFit(end)-timFit(1))/24/3600);
 torqFit = P.*(C+i*S);
 
 % Quadrature injection
-if (inj1)    
+if (false)    
     torqFit = injAmp*inGal'+abs(injAmp);
     timFit = timGal'*24*3600;
     P = ones(length(inGal),1);
@@ -156,7 +156,7 @@ for index = 0:lenDays/numDaysFit
     y = torqFit(indexCut);
 
     % Amplitude injection
-    if (inj2)
+    if (false)
         for ind = 1:length(cut)
             % Sync basis function and data
             galIndex = find(floor(timGal-cut(ind)/24/3600)==0,1);

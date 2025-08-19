@@ -20,7 +20,7 @@ labLong=-122.303400
 newYearTime=1704096000
 Seattle = EarthLocation(lat=labLat*u.deg,
                             lon=labLong*u.deg, height=56*u.m)
-theta_d = 0 # Composition dipole pointed in some direction
+theta_d = -23.0 # Composition dipole pointed in some direction
 
 for dayNum in days:
 

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 #days=np.arange(200.0,311.0,1.0/(24.0*3600.0))
-days=np.arange(1.0,5.0,1.0/(24.0*3600.0))
+days=np.arange(1.0,5.0,1.0/(24.0*60.0))
 inPhase=np.zeros(len(days))
 outPhase=np.zeros(len(days))
 index=0
@@ -30,7 +30,7 @@ for dayNum in days:
 	dateTime = datetime.fromtimestamp(timeStamp)
 	print(dayNum)
 
-	galLocGal=SkyCoord(l=0*u.degree, b=0*u.degree, frame='galactic')
+	galLocGal=SkyCoord(ra=255.7611*u.degree, dec=-29.0078*u.degree)
 
 	galLocLocal=galLocGal.transform_to(AltAz(obstime=dateTime,location=Seattle))
 
@@ -42,12 +42,12 @@ for dayNum in days:
 
 	#inPhase[index]=galDec
 	#outPhase[index]=galAsc
-	inPhase[index]=-np.cos(galDec*np.pi/180)*np.sin((galAsc + TTFreq*timeStamp + theta_d)*np.pi/180)
-	outPhase[index]= -np.cos(galDec*np.pi/180)*np.cos((galAsc + TTFreq*timeStamp + theta_d)*np.pi/180)
+	inPhase[index]=-np.cos(galDec*np.pi/180)*np.sin((galAsc+theta_d)*np.pi/180)
+	outPhase[index]= -np.cos(galDec*np.pi/180)*np.cos((galAsc+theta_d)*np.pi/180)
 	index+=1
 
 output=np.column_stack((days,inPhase,outPhase))
-np.savetxt('galVectMin.out',output)
+np.savetxt('galVectMinTest.out',output)
 
 plt.plot(days,inPhase)
 plt.plot(days,outPhase)

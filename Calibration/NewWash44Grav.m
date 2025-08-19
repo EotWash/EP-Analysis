@@ -14,12 +14,15 @@ T = 293; % Temperature (K)
 thetaCalib = 3/300/8; % Autocollimator calibration (rad/(Diff/Sum))
 TTFreq = 0.457120e-3; % Turn table frequency (Hz)
 
+m = 38.72e-3/2; % Mass (kg)
+r = 3.77e-2/2; % Lever-arm (m)
+
 %% Expected signal
-m = 1.25;
+m4 = 1.25;
 R = 28.6e-2;
 
 q = 9.35e-9;
-Q = 3/4*sqrt(35/2/pi)*m*R^-5;
+Q = 3/4*sqrt(35/2/pi)*m4*R^-5;
 G = 6.67430e-11;
 
 torqExp = 4*pi*G*4/9*q*Q;
@@ -284,22 +287,22 @@ per = (torqMeas/torqExp-1)*100
 
 phi = linspace(0,2*pi);
 figure(5)
-l=plot(Cn*1e15,Sn*1e15,'.',C*1e15,S*1e15,'.',...
-    (torqExp*cos(phi)+mean(Cn))*1e15,(torqExp*sin(phi)+mean(Sn))*1e15,'k');
+l=plot(Cn*1e12/m/r,Sn*1e12/m/r,'.',C*1e12/m/r,S*1e12/m/r,'.',...
+    (torqExp*cos(phi)+mean(Cn))*1e12/m/r,(torqExp*sin(phi)+mean(Sn))*1e12/m/r,'k');
 hold on
-x = ([0.9*torqExp*cos(phi), 1.1*torqExp*cos(fliplr(phi))]+mean(Cn))*1e15;
-y = ([0.9*torqExp*sin(phi), 1.1*torqExp*sin(fliplr(phi))]+mean(Sn))*1e15;
+x = ([0.9*torqExp*cos(phi), 1.1*torqExp*cos(fliplr(phi))]+mean(Cn))*1e12/m/r;
+y = ([0.9*torqExp*sin(phi), 1.1*torqExp*sin(fliplr(phi))]+mean(Sn))*1e12/m/r;
 fill(x,y,'k','LineStyle','none');
 alpha(0.1)
 hold off
-ylabel('Sine Torque (fN m)','Interpreter', 'latex')
-xlabel('Cosine Torque (fN m)','Interpreter', 'latex')
+ylabel('Sine Acceleration (pm/s$^2$)','Interpreter', 'latex')
+xlabel('Cosine Acceleration (pm/s$^2$)','Interpreter', 'latex')
 legend('No $Q_{4,4}$','With $Q_{4,4}$','Expected Change','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(l,'LineWidth',1.5);
-ylim([-8 4])
-xlim([-4 8])
+% ylim([-8 4])
+% xlim([-4 8])
 grid on
 %%
 if (false)

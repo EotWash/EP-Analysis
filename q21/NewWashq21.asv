@@ -1,0 +1,90 @@
+warning('off')
+
+%%
+
+w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
+I = 3.78e-5; % Moment of inertia (kg-m^2)
+% Q = 2.89e5; % Quality factor
+Q = 1.13e5;
+kappa = I*w0^2; % Spring constance (N m/rad)
+kb = 1.38064852e-23; % Boltzmann's constant (J/K)
+T = 293; % Temperature (K)
+thetaCalib = 0.0012523; % Autocollimator calibration (rad/(Diff/Sum))
+m = 38.72e-3/2; % Mass (kg)
+r = 3.77e-2/2; % Lever-arm (m)
+
+Msun = 1.9891e30; % Mass of sun (kg)
+G = 6.67430e-11; % Gravitational constant (m^3/kg/s^2)
+Rsun = 149.6e9; % Radius from earth to sun (m)
+
+aSun = G*Msun/Rsun^2; % Acceleration towards sun (m/s^2)
+aEarth = 1.68e-2; % Acceleration towards center of Earth (m/s^2)
+aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
+% aGalaxy =  9.7e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
+
+sidDay = 86164.0905; % Sidereal day (s)
+
+TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+
+% Thermal noise
+thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
+
+% Chi-squared threshold
+thresh = 7;
+
+%% Data loading
+
+if (true)
+
+    % Runs to load. Once per turntable cosine amplitude, sine amplitude, 
+    % and misfit are calculated in NewWashAnalysis.m then loaded here
+    runs = ["run6977FitsQ21.mat" "run6978FitsQ21.mat"];
+
+    C1 = [];
+    S1 = [];
+    C2 = [];
+    S2 = [];
+
+    for f=1:length(runs)
+        
+        in = load(runs(f));              
+       
+        if f == 1
+            C1 = [C1 in.out(2,:)];
+            S1 = [S1 in.out(3,:)];
+        else
+            C2 = [C2 in.out(2,:)];
+            S2 = [S2 in.out(3,:)];
+        end
+        
+    end
+
+end
+
+%% q21 Calc
+
+%% Figures
+
+% Fit quadrature plot
+figure(1)
+l=plot(C1*1e15,S1*1e15,'.',C2*1e15,S2*1e15,'.');
+ylabel('Sine Torque (fN m)','Interpreter', 'latex')
+xlabel('Cosine Torque (fN m)','Interpreter', 'latex')
+legend('Q21 Aligned','Q21 Anti-Aligned','Interpreter', 'latex')
+set(gca,'FontSize',16);
+set(l,'MarkerSize',16);
+set(l,'LineWidth',1.5);
+    ylim([-2.5 2.5])
+    xlim([-2.5 2.5])
+grid on
+
+%% Save plots
+
+if(false)
+    fig2=figure(1);
+    set(fig2,'Units','Inches');
+    pos = get(fig2,'Position');
+    set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
+    print(fig2,'EP_q21.pdf','-dpdf','-r1200')
+    
+end

@@ -68,11 +68,11 @@ disp(txt)
 
 % Angle time series
 figure(1)
-l=plot(tim,theta, tim , 2*pi*deltaSpeed*tim+(2.6e-4-2*pi*deltaSpeed*499));
+l=plot(tim,theta*1e3, tim , 1e3*(2*pi*deltaSpeed*tim+(2.6e-4-2*pi*deltaSpeed*499)));
 legend('Data','Expected from 1 $\mu$Hz Speed Change','Interpreter', 'latex','Location','northwest')
-ylabel('Angle (rad)','Interpreter', 'latex')
+ylabel('Angle (mrad)','Interpreter', 'latex')
 xlabel('Time (s)','Interpreter', 'latex')
-ylim([0 1.4e-3])
+ylim([0 1.4])
 xlim([300 640])
 %     text(200,1.25e-3, '1 $\mu$Hz Speed Change at 499 s ','FontSize',16,'Interpreter', 'latex')
 %     text(200,1.15e-3, txt,'FontSize',16,'Interpreter', 'latex')

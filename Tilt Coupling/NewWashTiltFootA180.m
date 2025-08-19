@@ -180,7 +180,7 @@ l=loglog(Fff,Aff,Fm,Am*abs(mu),[TTFreq TTFreq], [1e-19 1e-14],'--',[w0/2/pi w0/2
 ylabel('Torque (N m/$\sqrt{Hz}$)','Interpreter', 'latex')
 xlabel('Frequency (Hz)','Interpreter', 'latex')
 text(1.5e-4,8e-14,['Tilt Coupling: ' num2str(abs(mu)/kappa*100,2) ' +- ' num2str(un/kappa*100,2) ' %'],'FontSize',16,'Interpreter', 'latex')
-legend('Data', 'AGI 1', 'TT Frequency','Resonance','Thermal','Interpreter', 'latex')
+legend('Data', 'Coupling $\times$ Tilt', 'TT Frequency','Resonance','Thermal','Interpreter', 'latex')
 title('Tilt Injection Foot A 180','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'LineWidth',1.5);
