@@ -262,20 +262,22 @@ disp(['Eta Galaxy: ' num2str(etaGalaxy) ' +- ' num2str(etaGalaxyUnc)])
 
 %% Figures
 
+
 % Time series
 Rat = 9;
 figure(1)
+set(gcf,'position',[100 100 1600 750]);
 subplot(1,Rat,[1 Rat-1])
 l=plot(longTim/3600/24, longDat*1e15/(r*m), '.');
 hold on
 ll=plot(timGalFit,longFit*1e15/(r*m), [213 213],[-80 80],'k--', [420 420],[-80 80],'k--', [486 486],[-80 80],'k--');
 % patch([275 382 382 275], [-80 -80 80 80], [.5 .7 .7], 'LineStyle', 'none', 'FaceAlpha', 0.5)
 % text(300, 2, 'Hardware Failures','Interpreter', 'latex','FontSize',16)
-text(200, -70, '0$^\circ$','Interpreter', 'latex','FontSize',16)
-text(235, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
-text(393, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
-text(455, -70, '0$^\circ$','Interpreter', 'latex','FontSize',16)
-text(492, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
+% text(200, -70, '0$^\circ$','Interpreter', 'latex','FontSize',16)
+% text(235, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
+% text(393, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
+% text(455, -70, '0$^\circ$','Interpreter', 'latex','FontSize',16)
+% text(492, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
 xlabel('Time (days)','Interpreter', 'latex')
@@ -283,7 +285,7 @@ set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',2);
 ylim([-80 80])
-xlim([0.99*min(longTim/3600/24) 1.01*max(longTim/3600/24)])
+xlim([0.96*min(longTim/3600/24) 1.01*max(longTim/3600/24)])
 legend('Data','Fit','Interpreter', 'latex')
 grid on
 
@@ -301,6 +303,51 @@ set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 % legend('Data','Thermal Noise','Interpreter', 'latex')
 
+axes('position',[.32 .6 .15 .25])
+zoomIndex = find(and(longTim/3600/24>=384.8,longTim/3600/24<=386.8));
+l=plot(longTim(zoomIndex)/3600/24, longDat(zoomIndex)*1e15/(r*m), '.');
+hold on
+zoomIndex2 = find(and(timGalFit>=384.8,timGalFit<=386.8));
+ll=plot(timGalFit(zoomIndex2),longFit(zoomIndex2)*1e15/(r*m));
+hold off
+grid on
+box on
+set(gca, 'LineWidth',1.5)
+xlim([384.8 386.8])
+ylim([-40 40])
+set(l,'MarkerSize',8);
+set(ll,'LineWidth',1.5);
+
+annotation(gcf,'line',[0.47 0.5],[0.6 0.31],'LineWidth',1.5);
+annotation(gcf,'line',[0.47 0.5],[0.85 0.72],'LineWidth',1.5);
+annotation(gcf,'rectangle',[0.5 0.31 0.005 0.41],'LineWidth',1.5);
+
+pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
+width = pos(3);
+height = pos(4);
+
+annotation(gcf,'ellipse',[0.14 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.14 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.14+40/width 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.14+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+
+annotation(gcf,'ellipse',[0.35 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.35 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.35+40/width 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.35+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+
+annotation(gcf,'ellipse',[0.6 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.6 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.6+40/width 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.6+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+
+annotation(gcf,'ellipse',[0.72 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.72 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.72+40/width 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.72+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+
+
+%%
 % Galactic DM fits
 figure(3)
 uncPhi = linspace(0,2*pi,100);

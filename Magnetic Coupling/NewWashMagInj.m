@@ -16,7 +16,7 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 %% Data loading
 
-if (false)
+if (true)
     
     % Run number
     run = ['run6975'];
