@@ -30,8 +30,8 @@ for dayNum in days:
 	dateTime = datetime.fromtimestamp(timeStamp)
 	print(dayNum)
 
-	galLocGal=SkyCoord(ra=255.7611*u.degree, dec=-29.0078*u.degree)
-
+	#galLocGal=SkyCoord(ra=255.7611*u.degree, dec=-29.0078*u.degree)
+	galLocGal=SkyCoord(l=0*u.degree, b=0*u.degree, frame='galactic')
 	galLocLocal=galLocGal.transform_to(AltAz(obstime=dateTime,location=Seattle))
 
 	galDec=galLocLocal.alt.deg

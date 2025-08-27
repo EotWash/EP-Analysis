@@ -283,7 +283,7 @@ ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
 xlabel('Time (days)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
-set(ll,'LineWidth',2);
+set(ll,'LineWidth',1.5);
 ylim([-80 80])
 xlim([0.96*min(longTim/3600/24) 1.01*max(longTim/3600/24)])
 legend('Data','Fit','Interpreter', 'latex')
@@ -315,8 +315,9 @@ box on
 set(gca, 'LineWidth',1.5)
 xlim([384.8 386.8])
 ylim([-40 40])
-set(l,'MarkerSize',8);
+set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
+set(gca, 'FontSize',14)
 
 annotation(gcf,'line',[0.47 0.5],[0.6 0.31],'LineWidth',1.5);
 annotation(gcf,'line',[0.47 0.5],[0.85 0.72],'LineWidth',1.5);
@@ -326,39 +327,46 @@ pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
 width = pos(3);
 height = pos(4);
 
-annotation(gcf,'ellipse',[0.14 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.14 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.14+40/width 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.14+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'rectangle',[0.135 0.135 0.675 0.1],'FaceColor',[0.90,0.90,0.90],'FaceAlpha',0);
+annotation(gcf,'rectangle',[0.135 0.135 0.053 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.562 0.135 0.12 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.188 0.135 0.374 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.682 0.135 0.128 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
 
-annotation(gcf,'ellipse',[0.35 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.35 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.35+40/width 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.35+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'line',[0.15+10/width 0.15+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.15 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.15 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'arrow',[0.16 0.18],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'ellipse',[0.6 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.6 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.6+40/width 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.6+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'line',[0.36+10/width 0.36+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.36 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.36 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.37 0.39],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'ellipse',[0.72 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.72 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.72+40/width 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.72+40/width 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'line',[0.62+10/width 0.62+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.62 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.62 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'arrow',[0.63 0.65],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+
+annotation(gcf,'line',[0.75+10/width 0.75+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.75 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.75 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.76 0.78],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
 
 %%
 % Galactic DM fits
 figure(3)
+set(gcf,'position',[100 100 600 600]);
 uncPhi = linspace(0,2*pi,100);
 uncCirc = (2*std(cGal)/sqrt(length(cGal))*cos(thermPhi)+mean(cGal))...
         +i*(2*std(sGal)/sqrt(length(sGal))*sin(thermPhi)+mean(sGal));
 tiledlayout(4,4)
 nexttile([1,3])
-x = [-30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30];
+x = [-25 -20 -15 -10 -5 0 5 10 15 20 25];
 [n,x] = hist(real(torqGal)*1e15/(r*m), x);
 bar(x,n,1);
-xlim([-30 30])
+xlim([-25 25])
 % xlim([0 150])
 set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
@@ -373,13 +381,13 @@ ll=plot(mean(cGal)*1e15/(r*m),mean(sGal)*1e15/(r*m),'+',...
 hold off
 ylabel('Out-of-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
 xlabel('In-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
-text(-10,17,['$\eta_{DM}$ = (' num2str(1e5*etaGalaxy,4) ' $\pm$ ' num2str(1e5*etaGalaxyUnc,4) ') $\times\ 10^{-5}$'],'Interpreter', 'latex','FontSize',16)
+% text(-10,17,['$\eta_{DM}$ = (' num2str(1e5*etaGalaxy,4) ' $\pm$ ' num2str(1e5*etaGalaxyUnc,4) ') $\times\ 10^{-5}$'],'Interpreter', 'latex','FontSize',16)
 set(gca,'FontSize',16);
 set(l,'MarkerSize',18);
 set(ll,'LineWidth',2);
 set(ll,'MarkerSize',12);
-ylim([-30 30])
-xlim([-30 30])
+ylim([-25 25])
+xlim([-25 25])
 set(gca,'XTick',x)
 set(gca,'YTick',x)
 
@@ -388,7 +396,7 @@ grid on
 nexttile(8,[3,1])
 [n,x] = hist(imag(torqGal)*1e15/(r*m),x);
 barh(x,n,1);
-ylim([-30 30])
+ylim([-25 25])
 % xlim([0 150])
 set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
