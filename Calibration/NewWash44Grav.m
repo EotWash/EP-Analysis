@@ -1,7 +1,7 @@
 
 warning('off')
 
-loadData = true;
+loadData = false;
 
 %% Parameters
 
