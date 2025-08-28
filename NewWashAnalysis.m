@@ -2,17 +2,14 @@ warning('off')
 
 %% Parameters
 
-% w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
-w0 = 2*pi/1461;
+w0 = 2*pi/1461; % Resonant frequency (rad*Hz)
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-% Q = 2.89e5; % Quality factor
-Q = 1.1e5;
+Q = 1.1e5; % Quality factor
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
 thetaCalib = 3/300/8; % Autocollimator calibration (rad/(Diff/Sum))
-% TTFreq = 0.457120e-3; % Turn table frequency (Hz)
-TTFreq = 0.4568e-3;
+TTFreq = 0.4568e-3; % Turn table frequency (Hz)
 
 %% Data loading
 
@@ -46,10 +43,8 @@ inTheta = thetaCalib*inDiff./inSum;
 sampF = 1/(inTim(2)-inTim(1));
 
 % Time indices
-% startIndex = 2*24*3600;
 startIndex = 1e1;
 endIndex =length(inTTAngle);
-% endIndex = 3.09*24*3600;
 
 % Cut vectors
 tim = (startIndex:endIndex)*sampF;
@@ -220,8 +215,6 @@ if (true)
     set(gca,'FontSize',16);
     set(l,'MarkerSize',16);
     set(l,'LineWidth',1.5);
-%     ylim([-0.2 0.2])
-%     xlim([-0.2 0.2])
     grid on
     
     % Fit amplitude time series

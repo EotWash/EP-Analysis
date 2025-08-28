@@ -4,8 +4,7 @@ warning('off')
 
 w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-% Q = 2.89e5; % Quality factor
-Q = 1.13e5;
+Q = 1.13e5;  % Quality factor
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
@@ -28,19 +27,6 @@ TTFreq = 0.457120e-3; % Turn table frequency (Hz)
 
 % Thermal noise
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
-
-% %% Injection Controls
-% inj = [];
-% injEx = [];
-% injUnc = [];
-
-% inj = [inj injAmp/(r*m*aGalaxy)];
-% injEx = [injEx etaGalaxy];
-% injUnc = [injUnc etaGalaxyUnc];
-
-injAmp = 10e-5*(r*m*aGalaxy);
-inj1 = false; % Quadrature injection
-inj2 = false; % Amplitude injection
 
 % Chi-squared threshold
 thresh = 7;
@@ -115,6 +101,7 @@ if (true)
     inGal=(decimate(rawGal(:,2),floor(galSampF/sampF)));
     outGal=detrend(decimate(rawGal(:,3),floor(galSampF/sampF)));
 
+    % Daylight savings correction
     timGal = timGal - (timGal>307.042)/24 - (timGal<69.082)/24 - (timGal<433.041)/24 - (timGal>671.041)/24;
 
 end
@@ -124,15 +111,6 @@ lenDays = ceil((timFit(end)-timFit(1))/24/3600);
 
 % Calculate complex torque amplitude
 torqFit = P.*(C+i*S);
-
-% Quadrature injection
-if (inj1)    
-    torqFit = injAmp*inGal'+abs(injAmp);
-    timFit = timGal'*24*3600;
-    P = ones(length(inGal),1);
-    U = 0*P';
-end
-
 
 % Fit parameters
 fDay = 1/sidDay; % Daily frequency (Hz)
@@ -188,7 +166,6 @@ for index = 0:lenDays/numDaysFit
             % Sync basis function and data 
             galIndex = [];
             for cutGal = cut
-%                 galIndex = [galIndex find(floor(timGal-cutGal/24/3600)==0,1)];
                 [m,minI] = min(abs(timGal-cutGal/24/3600));
                 galIndex = [galIndex minI];
             end
@@ -271,13 +248,6 @@ subplot(1,Rat,[1 Rat-1])
 l=plot(longTim/3600/24, longDat*1e15/(r*m), '.');
 hold on
 ll=plot(timGalFit,longFit*1e15/(r*m), [213 213],[-80 80],'k--', [420 420],[-80 80],'k--', [486 486],[-80 80],'k--');
-% patch([275 382 382 275], [-80 -80 80 80], [.5 .7 .7], 'LineStyle', 'none', 'FaceAlpha', 0.5)
-% text(300, 2, 'Hardware Failures','Interpreter', 'latex','FontSize',16)
-% text(200, -70, '0$^\circ$','Interpreter', 'latex','FontSize',16)
-% text(235, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
-% text(393, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
-% text(455, -70, '0$^\circ$','Interpreter', 'latex','FontSize',16)
-% text(492, -70, '180$^\circ$','Interpreter', 'latex','FontSize',16)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
 xlabel('Time (days)','Interpreter', 'latex')
@@ -292,16 +262,11 @@ grid on
 subplot(1,Rat,Rat)
 [n,x] = hist(longDat*1e15/(r*m),15);
 barh(x,n,1);
-% hold on
-% xTherm = linspace(-1.5*max(x),1.5*max(x));
-% plot(max(n)*exp(-(xTherm.^2)/((thermAmp/sqrt(2)*1e15/r/m)^2)),xTherm,'LineWidth',2)
-% hold off
 ylim([-80 80])
 xlim([0 1.01*max(n)])
 set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
-% legend('Data','Thermal Noise','Interpreter', 'latex')
 
 axes('position',[.32 .6 .15 .25])
 zoomIndex = find(and(longTim/3600/24>=384.8,longTim/3600/24<=386.8));
@@ -367,7 +332,6 @@ x = [-25 -20 -15 -10 -5 0 5 10 15 20 25];
 [n,x] = hist(real(torqGal)*1e15/(r*m), x);
 bar(x,n,1);
 xlim([-25 25])
-% xlim([0 150])
 set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
 set(gca,'XTick',x)
@@ -381,7 +345,6 @@ ll=plot(mean(cGal)*1e15/(r*m),mean(sGal)*1e15/(r*m),'+',...
 hold off
 ylabel('Out-of-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
 xlabel('In-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
-% text(-10,17,['$\eta_{DM}$ = (' num2str(1e5*etaGalaxy,4) ' $\pm$ ' num2str(1e5*etaGalaxyUnc,4) ') $\times\ 10^{-5}$'],'Interpreter', 'latex','FontSize',16)
 set(gca,'FontSize',16);
 set(l,'MarkerSize',18);
 set(ll,'LineWidth',2);
@@ -397,7 +360,6 @@ nexttile(8,[3,1])
 [n,x] = hist(imag(torqGal)*1e15/(r*m),x);
 barh(x,n,1);
 ylim([-25 25])
-% xlim([0 150])
 set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
@@ -410,17 +372,15 @@ bar(XR,NR,'FaceAlpha',0.5)
 hold on
 bar(XU,NU,'FaceAlpha',0.5)
 hold off
-% xlim([-4 4]*1e-25)
 xlabel('$\chi^2$','Interpreter', 'latex')
 ylabel('Number','Interpreter', 'latex')
 legend('Without Data Quality Cut','With Data Quality Cut','Interpreter', 'latex')
 set(gca,'FontSize',16);
 grid on
-%%
+
 figure(6)
 ll = plot(uncT*2, uncGalT, linspace(0,200), thermAmp/(r*m*aGalaxy)/sqrt(24*3600*TTFreq/numDaysFit/3)./sqrt(linspace(0,200)),...
     [0 200], [1.3e-5 1.3e-5],'--');
-% xlim([-4 4]*1e-25)
 xlabel('Number of Days','Interpreter', 'latex')
 ylabel('Uncertainty','Interpreter', 'latex')
 legend('Data', 'Thermal Noise','$\eta < 1.3 \times 10^{-5}$','Interpreter', 'latex')
