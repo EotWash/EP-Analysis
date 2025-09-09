@@ -244,6 +244,11 @@ hold on
 ll=plot(timGalFit,longFit*1e15/(r*m), [213 213],[-80 80],'k--', [420 420],[-80 80],'k--', [486 486],[-80 80],'k--');
 text(180, -95, 'July 7, 2024','Interpreter', 'latex','FontSize',16)
 annotation(gcf,'line',[0.144 0.144],[0.06 0.11],'LineWidth',0.75);
+text(197, -50, '$0^\circ$','Interpreter', 'latex','FontSize',16)
+text(245, -50, '$180^\circ$','Interpreter', 'latex','FontSize',16)
+text(395, -50, '$180^\circ$','Interpreter', 'latex','FontSize',16)
+text(450, -50, '$0^\circ$','Interpreter', 'latex','FontSize',16)
+text(520, -50, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
 xlabel('Time (sidereal days since Jan. 1, 2024)','Interpreter', 'latex')
