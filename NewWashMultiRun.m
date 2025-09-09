@@ -24,14 +24,14 @@ aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 sidDay = 86164.0905; % Sidereal day (s)
 
 TTFreq = 0.457120e-3; % Turn table frequency (Hz)
-filtPhase = -53.69*pi/180; % Low-pass filter phase correction (rad)
-filtAt = 1/0.9958;
+filtPhase = 53.69*pi/180; % Low-pass filter phase correction (rad)
+filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 
 % Thermal noise
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
 
 % Chi-squared threshold
-thresh = 7;
+thresh = 5;
 
 %% Data loading
 
@@ -111,14 +111,14 @@ end
 lenDays = ceil((timFit(end)-timFit(1))/24/3600);
 
 % Calculate complex torque amplitude
-torqFit = filtAt*P.*(C+i*S).*(cos(filtPhase)+i*sin(filtPhase));
+torqFit = filtAt*(cos(filtPhase)+i*sin(filtPhase))*P.*(C+i*S);
 
 % Fit parameters
 fDay = 1/sidDay; % Daily frequency (Hz)
 wDay = 2*pi*fDay; % Daily frequency (rad*Hz)
 daySamples = floor(sampF/fDay); % Samples in a day
 numDaysFit = 2; % Length of cuts (days)
-lenMin = 0*numDaysFit; % Minimum length of cut (samples)
+lenMin = daySamples/2; % Minimum length of cut (samples)
 
 % Thermal noise circle
 thermPhi = linspace(0,2*pi,100); 
@@ -152,23 +152,13 @@ for index = 0:lenDays/numDaysFit
     pol = sign(mean(P(indexCut)));
     u = U(indexCut);
     y = torqFit(indexCut)-mean(torqFit(indexCut));
-
-    % Amplitude injection
-    if (inj2)
-        for ind = 1:length(cut)
-            % Sync basis function and data
-            galIndex = find(floor(timGal-cut(ind)/24/3600)==0,1);
-            y(ind) = y(ind) + P(ind)*injAmp*inGal(galIndex);
-        end
-    end
-
+  
     if not(isempty(cut))   
         if (length(y)>=lenMin)
 
             % Sync basis function and data 
             galIndex = [];
             for cutGal = cut
-%                 galIndex = [galIndex find(floor(timGal-cutGal/24/3600)==0,1)];
                 [m,minI] = min(abs(timGal-cutGal/24/3600));
                 galIndex = [galIndex minI];
             end
@@ -268,16 +258,10 @@ grid on
 subplot(1,Rat,Rat)
 [n,x] = hist(longDat*1e15/(r*m),15);
 barh(x,n,1);
-% hold on
-% xTherm = linspace(-1.5*max(x),1.5*max(x));
-% plot(max(n)*exp(-(xTherm.^2)/((thermAmp/sqrt(2)*1e15/r/m)^2)),xTherm,'LineWidth',2)
-% hold off
 ylim([-80 80])
 xlim([0 1.05*max(n)])
 set(gca,'YTickLabel',[])
-% set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
-% legend('Data','Thermal Noise','Interpreter', 'latex')
 set(gca, 'FontSize',16)
 
 axes('position',[.32 .6 .15 .25])
@@ -355,12 +339,10 @@ text(5,33,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Inte
 hold off
 xlim([-25 25])
 ylim([0 40])
-% set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
 set(gca,'XTick',x)
 set(gca,'XGrid','on','YGrid','off')
 set(gca,'FontSize',16);
-% nexttile(4)
 
 nexttile(5,[3,3])
 
@@ -375,7 +357,6 @@ hold off
 ylabel('Out-of-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
 xlabel('In-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
 legend('$0^\circ$', '$180^\circ$', 'Mean~~','Interpreter', 'latex','FontSize',14,'Position', [0.76 0.78 0.145 0.145])
-% text(-10,17,['$\eta_{DM}$ = (' num2str(1e5*etaGalaxy,4) ' $\pm$ ' num2str(1e5*etaGalaxyUnc,4) ') $\times\ 10^{-5}$'],'Interpreter', 'latex','FontSize',16)
 set(gca,'FontSize',16);
 set(l,'MarkerSize',4);
 set(ll,'MarkerSize',4);
@@ -400,7 +381,6 @@ hold off
 ylim([-25 25])
 xlim([0 40])
 set(gca,'YTickLabel',[])
-% set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca,'YTick',x)
 set(gca,'FontSize',16);
@@ -412,7 +392,6 @@ bar(XR,NR,'FaceAlpha',0.5)
 hold on
 bar(XU,NU,'FaceAlpha',0.5)
 hold off
-% xlim([-4 4]*1e-25)
 xlabel('$\chi^2$','Interpreter', 'latex')
 ylabel('Number','Interpreter', 'latex')
 legend('Without Data Quality Cut','With Data Quality Cut','Interpreter', 'latex')
@@ -422,7 +401,6 @@ grid on
 figure(6)
 ll = plot(uncT*2, uncGalT, linspace(0,200), thermAmp/(r*m*aGalaxy)/sqrt(24*3600*TTFreq/numDaysFit/3)./sqrt(linspace(0,200)),...
     [0 200], [1.3e-5 1.3e-5],'--');
-% xlim([-4 4]*1e-25)
 xlabel('Number of Days','Interpreter', 'latex')
 ylabel('Uncertainty','Interpreter', 'latex')
 legend('Data', 'Thermal Noise','$\eta < 1.3 \times 10^{-5}$','Interpreter', 'latex')
