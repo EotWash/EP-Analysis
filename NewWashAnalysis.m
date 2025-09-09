@@ -9,11 +9,12 @@ kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
 thetaCalib = 3/300/8; % Autocollimator calibration (rad/(Diff/Sum))
-TTFreq = 0.4568e-3; % Turn table frequency (Hz)
+TTFreq = 0.456e-3; % Turn table frequency (Hz)
+% TTFreq = 0.457120e-3; % Turn table frequency (Hz) (before run 6930)
 
 %% Data loading
 
-if (true)
+if (false)
     
     % Run number
     run = ['run6964'];
@@ -67,8 +68,8 @@ timFilt = tim(find(diff(Cycle)>0.5,1):end);
 angFilt = theta(find(diff(Cycle)>0.5,1):end);
 
 % 1 mHz low pass to remove autocollimator noise
-[b,a] = butter(3,2*1e-3/sampF,'low');
-tqFit = filter(b,a,torqFilt);
+[b,a] = butter(2,2*1e-3/sampF,'low');
+tqFit = filtfilt(b,a,torqFilt);
 tqFit = tqFit(2e3:end);
 tFit = timFilt(2e3:end);
 ttFit = TTAngle(2e3:end);

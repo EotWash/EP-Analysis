@@ -4,7 +4,8 @@ warning('off')
 
 w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-Q = 1.13e5;  % Quality factor
+% Q = 2.89e5; % Quality factor
+Q = 1.13e5;
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
@@ -19,11 +20,12 @@ Rsun = 149.6e9; % Radius from earth to sun (m)
 aSun = G*Msun/Rsun^2; % Acceleration towards sun (m/s^2)
 aEarth = 1.68e-2; % Acceleration towards center of Earth (m/s^2)
 aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
-% aGalaxy =  9.7e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 sidDay = 86164.0905; % Sidereal day (s)
 
 TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+filtPhase = -53.69*pi/180; % Low-pass filter phase correction (rad)
+filtAt = 1/0.9958;
 
 % Thermal noise
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
@@ -89,7 +91,7 @@ if (true)
     S = Sin(unCut);
     U = Uin(unCut);
     P = Pin(unCut);
-    timFit = timFitin(unCut);
+    timFit = timFitin(unCut);   
     
     % Sampling frequency
     sampF = 1/(timFit(5)-timFit(4));
@@ -101,7 +103,6 @@ if (true)
     inGal=(decimate(rawGal(:,2),floor(galSampF/sampF)));
     outGal=detrend(decimate(rawGal(:,3),floor(galSampF/sampF)));
 
-    % Daylight savings correction
     timGal = timGal - (timGal>307.042)/24 - (timGal<69.082)/24 - (timGal<433.041)/24 - (timGal>671.041)/24;
 
 end
@@ -110,7 +111,7 @@ end
 lenDays = ceil((timFit(end)-timFit(1))/24/3600);
 
 % Calculate complex torque amplitude
-torqFit = P.*(C+i*S);
+torqFit = filtAt*P.*(C+i*S).*(cos(filtPhase)+i*sin(filtPhase));
 
 % Fit parameters
 fDay = 1/sidDay; % Daily frequency (Hz)
@@ -133,6 +134,7 @@ cGal = [];
 sGal = [];
 timGalFit = [];
 uGal = [];
+pGal = [];
 
 % Create long vectors for plotting
 longFit = [];
@@ -166,6 +168,7 @@ for index = 0:lenDays/numDaysFit
             % Sync basis function and data 
             galIndex = [];
             for cutGal = cut
+%                 galIndex = [galIndex find(floor(timGal-cutGal/24/3600)==0,1)];
                 [m,minI] = min(abs(timGal-cutGal/24/3600));
                 galIndex = [galIndex minI];
             end
@@ -188,6 +191,7 @@ for index = 0:lenDays/numDaysFit
                     cGal = [cGal real(a(1))];
                     sGal = [sGal imag(a(1))];
                     uGal = [uGal std(a'*x'-y)];
+                    pGal = [pGal pol];
                     timGalFit = [timGalFit; timGal(galLongIndex)];
                     longFit = [longFit (a'*xLong')-mean(a'*xLong')];
                     longTim = [longTim timFit(indexCut)];
@@ -248,9 +252,11 @@ subplot(1,Rat,[1 Rat-1])
 l=plot(longTim/3600/24, longDat*1e15/(r*m), '.');
 hold on
 ll=plot(timGalFit,longFit*1e15/(r*m), [213 213],[-80 80],'k--', [420 420],[-80 80],'k--', [486 486],[-80 80],'k--');
+text(180, -95, 'July 7, 2024','Interpreter', 'latex','FontSize',16)
+annotation(gcf,'line',[0.144 0.144],[0.06 0.11],'LineWidth',0.75);
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
-xlabel('Time (days)','Interpreter', 'latex')
+xlabel('Time (sidereal days since Jan. 1, 2024)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
@@ -262,11 +268,17 @@ grid on
 subplot(1,Rat,Rat)
 [n,x] = hist(longDat*1e15/(r*m),15);
 barh(x,n,1);
+% hold on
+% xTherm = linspace(-1.5*max(x),1.5*max(x));
+% plot(max(n)*exp(-(xTherm.^2)/((thermAmp/sqrt(2)*1e15/r/m)^2)),xTherm,'LineWidth',2)
+% hold off
 ylim([-80 80])
-xlim([0 1.01*max(n)])
+xlim([0 1.05*max(n)])
 set(gca,'YTickLabel',[])
-set(gca,'XTickLabel',[])
+% set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
+% legend('Data','Thermal Noise','Interpreter', 'latex')
+set(gca, 'FontSize',16)
 
 axes('position',[.32 .6 .15 .25])
 zoomIndex = find(and(longTim/3600/24>=384.8,longTim/3600/24<=386.8));
@@ -284,9 +296,9 @@ set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
 set(gca, 'FontSize',14)
 
-annotation(gcf,'line',[0.47 0.5],[0.6 0.31],'LineWidth',1.5);
-annotation(gcf,'line',[0.47 0.5],[0.85 0.72],'LineWidth',1.5);
-annotation(gcf,'rectangle',[0.5 0.31 0.005 0.41],'LineWidth',1.5);
+annotation(gcf,'line',[0.47 0.4985],[0.6 0.31],'LineWidth',1.5);
+annotation(gcf,'line',[0.47 0.4985],[0.85 0.72],'LineWidth',1.5);
+annotation(gcf,'rectangle',[0.4985 0.31 0.004 0.41],'LineWidth',1.5);
 
 pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
 width = pos(3);
@@ -295,7 +307,8 @@ height = pos(4);
 annotation(gcf,'rectangle',[0.135 0.135 0.675 0.1],'FaceColor',[0.90,0.90,0.90],'FaceAlpha',0);
 annotation(gcf,'rectangle',[0.135 0.135 0.053 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
 annotation(gcf,'rectangle',[0.562 0.135 0.12 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
-annotation(gcf,'rectangle',[0.188 0.135 0.374 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.188 0.135 0.12 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.485 0.135 0.077 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
 annotation(gcf,'rectangle',[0.682 0.135 0.128 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
 
 annotation(gcf,'line',[0.15+10/width 0.15+10/width],[0.2 0.2-40/height],'LineWidth',3);
@@ -303,10 +316,15 @@ annotation(gcf,'ellipse',[0.15 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.
 annotation(gcf,'ellipse',[0.15 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
 annotation(gcf,'arrow',[0.16 0.18],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'line',[0.36+10/width 0.36+10/width],[0.2 0.2-40/height],'LineWidth',3);
-annotation(gcf,'ellipse',[0.36 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.36 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'arrow',[0.37 0.39],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+annotation(gcf,'line',[0.25+10/width 0.25+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.25 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.25 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.26 0.28],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+
+annotation(gcf,'line',[0.52+10/width 0.52+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.52 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.52 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.53 0.55],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
 annotation(gcf,'line',[0.62+10/width 0.62+10/width],[0.2 0.2-40/height],'LineWidth',3);
 annotation(gcf,'ellipse',[0.62 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
@@ -324,31 +342,47 @@ annotation(gcf,'arrow',[0.76 0.78],[0.2-10/height 0.2-10/height],'LineWidth',2,'
 figure(3)
 set(gcf,'position',[100 100 600 600]);
 uncPhi = linspace(0,2*pi,100);
-uncCirc = (2*std(cGal)/sqrt(length(cGal))*cos(thermPhi)+mean(cGal))...
-        +i*(2*std(sGal)/sqrt(length(sGal))*sin(thermPhi)+mean(sGal));
+uncCirc = (std(cGal)/sqrt(length(cGal))*cos(thermPhi)+mean(cGal))...
+        +i*(std(sGal)/sqrt(length(sGal))*sin(thermPhi)+mean(sGal));
 tiledlayout(4,4)
 nexttile([1,3])
 x = [-25 -20 -15 -10 -5 0 5 10 15 20 25];
 [n,x] = hist(real(torqGal)*1e15/(r*m), x);
 bar(x,n,1);
+hold on
+text(-23,33,['$\mu_{in}$ = ' num2str(mean(cGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(5,33,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+hold off
 xlim([-25 25])
-set(gca,'YTickLabel',[])
+ylim([0 40])
+% set(gca,'YTickLabel',[])
 set(gca,'XTickLabel',[])
 set(gca,'XTick',x)
 set(gca,'XGrid','on','YGrid','off')
+set(gca,'FontSize',16);
+% nexttile(4)
 
 nexttile(5,[3,3])
-l=plot(real(torqGal)*1e15/(r*m),imag(torqGal)*1e15/(r*m),'.');
+
+t0 = find(pGal>0);
+t180 = find(pGal<0);
+l=plot(real(torqGal(t0))*1e15/(r*m),imag(torqGal(t0))*1e15/(r*m),'o');
 hold on
-ll=plot(mean(cGal)*1e15/(r*m),mean(sGal)*1e15/(r*m),'+',...
+ll=plot(real(torqGal(t180))*1e15/(r*m),imag(torqGal(t180))*1e15/(r*m),'o', 'Color', [0.9290 0.6940 0.1250]);
+lll=plot(mean(cGal)*1e15/(r*m),mean(sGal)*1e15/(r*m),'+',...
     real(uncCirc)*1e15/(r*m),imag(uncCirc)*1e15/(r*m), 'Color', [0.8500 0.3250 0.0980]);
 hold off
 ylabel('Out-of-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
 xlabel('In-Phase Acceleration (fm/s$^2$)','Interpreter', 'latex')
+legend('$0^\circ$', '$180^\circ$', 'Mean~~','Interpreter', 'latex','FontSize',14,'Position', [0.76 0.78 0.145 0.145])
+% text(-10,17,['$\eta_{DM}$ = (' num2str(1e5*etaGalaxy,4) ' $\pm$ ' num2str(1e5*etaGalaxyUnc,4) ') $\times\ 10^{-5}$'],'Interpreter', 'latex','FontSize',16)
 set(gca,'FontSize',16);
-set(l,'MarkerSize',18);
+set(l,'MarkerSize',4);
+set(ll,'MarkerSize',4);
+set(l,'LineWidth',2);
 set(ll,'LineWidth',2);
-set(ll,'MarkerSize',12);
+set(lll,'LineWidth',1.5);
+set(lll,'MarkerSize',10);
 ylim([-25 25])
 xlim([-25 25])
 set(gca,'XTick',x)
@@ -359,11 +393,17 @@ grid on
 nexttile(8,[3,1])
 [n,x] = hist(imag(torqGal)*1e15/(r*m),x);
 barh(x,n,1);
+hold on
+text(33,23,['$\mu_{out}$ = ' num2str(mean(sGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(33,-5,['$\sigma_{out}$ = ' num2str(std(sGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+hold off
 ylim([-25 25])
+xlim([0 40])
 set(gca,'YTickLabel',[])
-set(gca,'XTickLabel',[])
+% set(gca,'XTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca,'YTick',x)
+set(gca,'FontSize',16);
 
 figure(5)
 [NR,XR] = hist(Uraw,100);
@@ -372,15 +412,17 @@ bar(XR,NR,'FaceAlpha',0.5)
 hold on
 bar(XU,NU,'FaceAlpha',0.5)
 hold off
+% xlim([-4 4]*1e-25)
 xlabel('$\chi^2$','Interpreter', 'latex')
 ylabel('Number','Interpreter', 'latex')
 legend('Without Data Quality Cut','With Data Quality Cut','Interpreter', 'latex')
 set(gca,'FontSize',16);
 grid on
-
+%%
 figure(6)
 ll = plot(uncT*2, uncGalT, linspace(0,200), thermAmp/(r*m*aGalaxy)/sqrt(24*3600*TTFreq/numDaysFit/3)./sqrt(linspace(0,200)),...
     [0 200], [1.3e-5 1.3e-5],'--');
+% xlim([-4 4]*1e-25)
 xlabel('Number of Days','Interpreter', 'latex')
 ylabel('Uncertainty','Interpreter', 'latex')
 legend('Data', 'Thermal Noise','$\eta < 1.3 \times 10^{-5}$','Interpreter', 'latex')
