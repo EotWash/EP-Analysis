@@ -30,8 +30,8 @@ filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 % Thermal noise
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
 
-% Chi-squared threshold from distribution fit
-thresh = 3.77;
+% Chi-squared threshold
+thresh = 5;
 
 %% Data loading
 
@@ -82,14 +82,24 @@ if (true)
         end
     end
 
-    % 2-sigma cuts
+    %% 2-sigma cuts
+
+    % Cosine cut
+%     unCut = find(and(and(Cin>prctile(Cin,5),Cin<prctile(Cin,95)),...
+%         and(Sin>prctile(Sin,5),Sin<prctile(Sin,95))));
+%     C = Cin(unCut);
+%     S = Sin(unCut);
+%     U = Uin(unCut);
+%     P = Pin(unCut);
+%     timFit = timFitin(unCut);   
+    
     unCut = find(and(and(Cin>prctile(Cin,5),Cin<prctile(Cin,95)),...
         and(Sin>prctile(Sin,5),Sin<prctile(Sin,95))));
     C = Cin(unCut);
     S = Sin(unCut);
     U = Uin(unCut);
     P = Pin(unCut);
-    timFit = timFitin(unCut);    
+    timFit = timFitin(unCut); 
 
     % Sampling frequency
     sampF = 1/(timFit(5)-timFit(4));
@@ -116,7 +126,7 @@ fDay = 1/sidDay; % Daily frequency (Hz)
 wDay = 2*pi*fDay; % Daily frequency (rad*Hz)
 daySamples = floor(sampF/fDay); % Samples in a day
 numDaysFit = 2; % Length of cuts (days)
-lenMin = daySamples/4; % Minimum length of cut (samples)
+lenMin = daySamples/2; % Minimum length of cut (samples)
 
 % Thermal noise circle
 thermPhi = linspace(0,2*pi,100); 

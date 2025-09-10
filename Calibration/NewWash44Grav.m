@@ -277,6 +277,16 @@ for index = 0:floor(length(tFit)/fitSamples)-1
     S2 = [S2 a(8)];        
 
 end
+%%
+unCut = find(and(and(C>prctile(C,5),C<prctile(C,95)),...
+        and(S>prctile(S,5),S<prctile(S,95))));
+C = C(unCut);
+S = S(unCut);
+
+unCut = find(and(and(Cn>prctile(Cn,5),Cn<prctile(Cn,95)),...
+        and(Sn>prctile(Sn,5),Sn<prctile(Sn,95))));
+Cn = Cn(unCut);
+Sn = Sn(unCut);
 %% 
 
 torqMeas = abs((mean(C)-mean(Cn))+i*(mean(S)-mean(Sn)))
