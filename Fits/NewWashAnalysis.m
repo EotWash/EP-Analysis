@@ -68,8 +68,8 @@ timFilt = tim(find(diff(Cycle)>0.5,1):end);
 angFilt = theta(find(diff(Cycle)>0.5,1):end);
 
 % 1 mHz low pass to remove autocollimator noise
-[b,a] = butter(2,2*1e-3/sampF,'low');
-tqFit = filtfilt(b,a,torqFilt);
+[b,a] = butter(3,2*1e-3/sampF,'low');
+tqFit = filter(b,a,torqFilt);
 tqFit = tqFit(2e3:end);
 tFit = timFilt(2e3:end);
 ttFit = TTAngle(2e3:end);
