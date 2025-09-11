@@ -4,7 +4,6 @@ warning('off')
 
 w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-% Q = 2.89e5; % Quality factor
 Q = 1.13e5;
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
@@ -101,6 +100,7 @@ if (true)
     inGal=(decimate(rawGal(:,2),floor(galSampF/sampF)));
     outGal=detrend(decimate(rawGal(:,3),floor(galSampF/sampF)));
 
+    % Daylight savings correction
     timGal = timGal - (timGal>307.042)/24 - (timGal<69.082)/24 - (timGal<433.041)/24 - (timGal>671.041)/24;
 
 end
@@ -205,16 +205,6 @@ torqGal = cGal+i*sGal;
 % Mean and uncertainty of in-phase torque
 ampGal = mean(cGal);
 uncGal = std(cGal)/sqrt(length(sGal));
-
-%% Uncertainty vs time calc
-cGalA = (cGal);
-uncT = 1:length(cGal);
-uncGalT = [];
-for index=uncT
-    cGalT = cGalA(1:index);
-    uncGalT = [uncGalT; std(cGalT)/sqrt(length(cGalT))/(r*m*aGalaxy)];
-
-end
 
 %%
 
@@ -388,30 +378,6 @@ set(gca,'XGrid','off','YGrid','on')
 set(gca,'YTick',x)
 set(gca,'FontSize',16);
 
-figure(5)
-[NR,XR] = hist(Uraw,100);
-[NU,XU] = hist(U,XR);
-bar(XR,NR,'FaceAlpha',0.5)
-hold on
-bar(XU,NU,'FaceAlpha',0.5)
-hold off
-xlabel('$\chi^2$','Interpreter', 'latex')
-ylabel('Number','Interpreter', 'latex')
-legend('Without Data Quality Cut','With Data Quality Cut','Interpreter', 'latex')
-set(gca,'FontSize',16);
-grid on
-%%
-figure(6)
-ll = plot(uncT*2, uncGalT, linspace(0,200), thermAmp/(r*m*aGalaxy)/sqrt(24*3600*TTFreq/numDaysFit/3)./sqrt(linspace(0,200)),...
-    [0 200], [1.3e-5 1.3e-5],'--');
-xlabel('Number of Days','Interpreter', 'latex')
-ylabel('Uncertainty','Interpreter', 'latex')
-legend('Data', 'Thermal Noise','$\eta < 1.3 \times 10^{-5}$','Interpreter', 'latex')
-set(gca,'FontSize',16);
-set(ll,'LineWidth',2);
-ylim([0 4e-5])
-grid on
-
 %% Save plots
 
 if(false)
@@ -426,10 +392,4 @@ if(false)
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
     print(fig2,'EP_GalacticFits.pdf','-dpdf','-r1200')
-
-    fig2=figure(6);
-    set(fig2,'Units','Inches');
-    pos = get(fig2,'Position');
-    set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'EP_UncVsTime.pdf','-dpdf','-r1200')
 end
