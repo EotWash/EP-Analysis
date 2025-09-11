@@ -68,16 +68,18 @@ disp(txt)
 
 % Angle time series
 figure(1)
-l=plot(tim,theta*1e3, tim(find(tim>=498)) , 1e3*(2*pi*deltaSpeed*tim(find(tim>=498))+(2.6e-4-2*pi*deltaSpeed*499)),'-.');
+l=plot(tim,theta*1e3)
+hold on 
+ll=plot(tim(find(tim>=498)), 1e3*(2*pi*deltaSpeed*tim(find(tim>=498))+(2.6e-4-2*pi*deltaSpeed*499)),'--');
+hold off
 legend('Data','Expected from 1 $\mu$Hz Speed Change','Interpreter', 'latex','Location','northwest')
 ylabel('Angle (mrad)','Interpreter', 'latex')
 xlabel('Time (s)','Interpreter', 'latex')
 ylim([0 0.7])
 xlim([440 550])
-%     text(200,1.25e-3, '1 $\mu$Hz Speed Change at 499 s ','FontSize',16,'Interpreter', 'latex')
-%     text(200,1.15e-3, txt,'FontSize',16,'Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'LineWidth',1.5);
+set(ll,'LineWidth',2.5);
 grid on
     %%
 if (true)

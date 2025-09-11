@@ -277,7 +277,7 @@ hold off
 grid on
 box on
 set(gca, 'LineWidth',1.5)
-xlim([384.8 386.8])
+xlim([384.9 386.8])
 ylim([-40 40])
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);

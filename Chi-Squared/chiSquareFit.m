@@ -13,13 +13,14 @@ cutoff = xh(min(find(cdf>0.99)))
 figure(5)
 bar(xh,n,'FaceAlpha',0.5)
 hold on
-plot(xh,chi(x,xh),'LineWidth',1.5)
+plot(xh,chi(x,xh),'LineWidth',2)
 plot([cutoff cutoff], [0 500],'k--','LineWidth',1.5)
 hold off
-xlabel('$\chi^2$','Interpreter', 'latex')
+xlabel('Misfit-Squared (arb. units)','Interpreter', 'latex')
 ylabel('Number','Interpreter', 'latex')
-legend('Without Data Quality Cut','Fit','Cutoff','Interpreter', 'latex')
+legend('Misfit-Squared','$\chi^2$-Fit','99th Percentile','Interpreter', 'latex')
 set(gca,'FontSize',16);
+xlim([2 10])
 grid on
 
 fig2=figure(5);
