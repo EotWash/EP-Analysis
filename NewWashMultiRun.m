@@ -1,5 +1,6 @@
 warning('off')
-
+clear
+close all
 %%
 
 w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
@@ -21,8 +22,9 @@ aEarth = 1.68e-2; % Acceleration towards center of Earth (m/s^2)
 aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 sidDay = 86164.0905; % Sidereal day (s)
+sidYear=31536000; %Sideral year (s)
 
-TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+TTFreq = 0.4564e-3; % Turn table frequency (Hz)
 filtPhase = 53.69*pi/180; % Low-pass filter phase correction (rad)
 filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 
@@ -30,7 +32,7 @@ filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
 
 % Chi-squared threshold from distribution fit
-thresh = 3.77;
+thresh = 3.9112; %New threshold
 
 %% Data loading
 
@@ -39,12 +41,14 @@ if (true)
     % Runs to load. Once per turntable cosine amplitude, sine amplitude, 
     % and misfit are calculated in NewWashAnalysis.m then loaded here
     runs = ["run6891Fits.mat" "run6893Fits.mat" ...
-       "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
+        "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
         "run6903Fits.mat" "run6904Fits.mat" "run6905Fits.mat" "run6923Fits.mat" ...
         "run6925Fits.mat" "run6926Fits.mat" "run6927Fits.mat" "run6930Fits.mat"...
         "run6931Fits.mat" "run6936Fits.mat" "run6939Fits.mat" "run6949Fits.mat"...
         "run6950Fits.mat" "run6954Fits.mat" "run6955Fits.mat" "run6956Fits.mat"...
         "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat"];
+    runs=[runs,"run6979Fits.mat", "run6981Fits.mat", "run6982Fits.mat"...
+        "run6984Fits.mat", "run6985Fits.mat", "run6986Fits.mat", "run6987Fits.mat", "run6988Fits.mat"];
 
     timFitin =[];
     Cin = [];
@@ -61,7 +65,7 @@ if (true)
         unCut = find(in.out(4,:)/thermAmp < thresh);
         
         % Moved time zero to midnight Jan. 1, 2024
-        if f<10
+        if f<=find(runs=="run6905Fits.mat") %Last run of 2024
             % 2024 Runs
             timFitin = [timFitin mod(in.out(1,unCut),31556926)];
         else
@@ -72,11 +76,11 @@ if (true)
         Sin = [Sin detrend(in.out(3,unCut))];
         Uin = [Uin in.out(4,unCut)/thermAmp];
         Uraw = [Uraw in.out(4,:)/thermAmp];
-        
+
         % Pendulum flips
-        if or(f<3,and(f>13,f<20))
+        if or(f<=2,or(and(f>=13,f<20),f>25)) %0 degrees
             Pin = [Pin in.out(4,unCut)*0+1];
-        else 
+        else %180 degrees
             Pin = [Pin in.out(4,unCut)*0-1];
         end
     end
@@ -91,11 +95,11 @@ if (true)
     timFit = timFitin(unCut);    
 
     % Sampling frequency
-    sampF = 1/(timFit(5)-timFit(4));
+    sampF = 1/(mode(round(diff(timFit),3))); %making sure have correct sampling frequency
 
     % Loading in galaxy basis funtions outputted from galVect.py
     rawGal=load('Basis Functions\galVectMin.out');
-    galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
+    galSampF = 1/(rawGal(2,1)-rawGal(1,1))/sidDay;
     timGal=decimate(rawGal(:,1),floor(galSampF/sampF));
     inGal=(decimate(rawGal(:,2),floor(galSampF/sampF)));
     outGal=detrend(decimate(rawGal(:,3),floor(galSampF/sampF)));
@@ -106,7 +110,7 @@ if (true)
 end
 
 % Length of days
-lenDays = ceil((timFit(end)-timFit(1))/24/3600);
+lenDays = ceil((timFit(end)-timFit(1))/sidDay);
 
 % Calculate complex torque amplitude
 torqFit = filtAt*(cos(filtPhase)+i*sin(filtPhase))*P.*(C+i*S);
@@ -143,7 +147,7 @@ longU = [];
 for index = 0:lenDays/numDaysFit
 
     % Find cut indices
-    indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFit)==index);
+    indexCut = find(floor((timFit-timFit(1))/sidDay/numDaysFit)==index);
 
     % Cut vectors
     cut = timFit(indexCut);
@@ -157,7 +161,7 @@ for index = 0:lenDays/numDaysFit
             % Sync basis function and data 
             galIndex = [];
             for cutGal = cut
-                [m,minI] = min(abs(timGal-cutGal/24/3600));
+                [~,minI] = min(abs(timGal-cutGal/sidDay)); % CORRECTED
                 galIndex = [galIndex minI];
             end
             
@@ -165,8 +169,8 @@ for index = 0:lenDays/numDaysFit
             x = [inGal(galIndex)+i*outGal(galIndex)];
             
             % Long basis functions for plotting 
-            galLongIndex = find(and(timGal>=(index*numDaysFit+timFit(1)/24/3600),...
-                timGal<=((index+1)*numDaysFit)+timFit(1)/24/3600));
+            galLongIndex = find(and(timGal>=(index*numDaysFit+timFit(1)/sidDay),...
+                timGal<=((index+1)*numDaysFit)+timFit(1)/sidDay));
             xLong = [inGal(galLongIndex)+i*outGal(galLongIndex)];
 
             if not(isempty(x))
@@ -227,7 +231,7 @@ Rat = 9;
 figure(1)
 set(gcf,'position',[100 100 1600 750]);
 subplot(1,Rat,[1 Rat-1])
-l=plot(longTim/3600/24, longDat*1e15/(r*m), '.');
+l=plot(longTim/sidDay, longDat*1e15/(r*m), '.');
 hold on
 ll=plot(timGalFit,longFit*1e15/(r*m), [213 213],[-80 80],'k--', [420 420],[-80 80],'k--', [486 486],[-80 80],'k--');
 text(180, -95, 'July 7, 2024','Interpreter', 'latex','FontSize',16)
@@ -244,7 +248,7 @@ set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
 ylim([-80 80])
-xlim([0.96*min(longTim/3600/24) 1.01*max(longTim/3600/24)])
+xlim([0.96*min(longTim/sidDay) 1.01*max(longTim/sidDay)])
 legend('Data','Fit','Interpreter', 'latex')
 grid on
 
@@ -258,8 +262,8 @@ set(gca,'XGrid','off','YGrid','on')
 set(gca, 'FontSize',16)
 
 axes('position',[.32 .6 .15 .25])
-zoomIndex = find(and(longTim/3600/24>=384.8,longTim/3600/24<=386.8));
-l=plot(longTim(zoomIndex)/3600/24, longDat(zoomIndex)*1e15/(r*m), '.');
+zoomIndex = find(and(longTim/sidDay>=384.8,longTim/sidDay<=386.8));
+l=plot(longTim(zoomIndex)/sidDay, longDat(zoomIndex)*1e15/(r*m), '.');
 hold on
 zoomIndex2 = find(and(timGalFit>=384.8,timGalFit<=386.8));
 ll=plot(timGalFit(zoomIndex2),longFit(zoomIndex2)*1e15/(r*m));
