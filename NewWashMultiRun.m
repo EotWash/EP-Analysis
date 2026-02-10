@@ -22,7 +22,7 @@ aEarth = 1.68e-2; % Acceleration towards center of Earth (m/s^2)
 aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 sidDay = 86164.0905; % Sidereal day (s)
-sidYear=31536000; %Sideral year (s)
+sidYear=31556926; %Sideral year (s)
 
 TTFreq = 0.4564e-3; % Turn table frequency (Hz)
 filtPhase = 53.69*pi/180; % Low-pass filter phase correction (rad)
@@ -46,9 +46,11 @@ if (true)
         "run6925Fits.mat" "run6926Fits.mat" "run6927Fits.mat" "run6930Fits.mat"...
         "run6931Fits.mat" "run6936Fits.mat" "run6939Fits.mat" "run6949Fits.mat"...
         "run6950Fits.mat" "run6954Fits.mat" "run6955Fits.mat" "run6956Fits.mat"...
-        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat"];
-    runs=[runs,"run6979Fits.mat", "run6981Fits.mat", "run6982Fits.mat"...
+        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat"]; %"run6979Fits.mat","run6981Fits.mat",
+    runs=[runs,  "run6982Fits.mat"...
         "run6984Fits.mat", "run6985Fits.mat", "run6986Fits.mat", "run6987Fits.mat", "run6988Fits.mat"];
+    runP = [1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1]; % 1 if 0 deg, 0 if 180 deg
+    yr = [ones(1,25) 0*ones(1,8)];
 
     timFitin =[];
     Cin = [];
@@ -56,6 +58,7 @@ if (true)
     Uin = [];
     Pin = [];
     Uraw = [];
+    Yrin = [];
 
     for f=1:length(runs)
         
@@ -64,24 +67,37 @@ if (true)
         % Chi-squared cut        
         unCut = find(in.out(4,:)/thermAmp < thresh);
         
-        % Moved time zero to midnight Jan. 1, 2024
-        if f<=find(runs=="run6905Fits.mat") %Last run of 2024
-            % 2024 Runs
-            timFitin = [timFitin mod(in.out(1,unCut),31556926)];
-        else
-            % 2025 Runs
-            timFitin = [timFitin mod(in.out(1,unCut),31556926)+31556926];
+        if f == 1
+           timOffset = floor(in.out(1,1)/sidYear);
         end
+
+        timFitin = [timFitin (in.out(1,unCut) - timOffset*sidYear)];
+
+%         % Moved time zero to midnight Jan. 1, 2024
+%         if f<=find(runs=="run6905Fits.mat") %Last run of 2024
+%             % 2024 Runs
+%             timFitin = [timFitin mod(in.out(1,unCut),sidYear)];
+%         else
+%             % 2025 Runs
+%             timFitin = [timFitin mod(in.out(1,unCut),sidYear)+sidYear];
+%         end
         Cin = [Cin detrend(in.out(2,unCut))];
         Sin = [Sin detrend(in.out(3,unCut))];
         Uin = [Uin in.out(4,unCut)/thermAmp];
         Uraw = [Uraw in.out(4,:)/thermAmp];
 
         % Pendulum flips
-        if or(f<=2,or(and(f>=13,f<20),f>25)) %0 degrees
+        if runP(f) %0 degrees
             Pin = [Pin in.out(4,unCut)*0+1];
         else %180 degrees
             Pin = [Pin in.out(4,unCut)*0-1];
+        end
+
+        % Year marking
+        if yr(f) % 2024
+            Yrin = [Yrin in.out(4,unCut)*0+1];
+        else % 2025
+            Yrin = [Yrin in.out(4,unCut)*0-1];
         end
     end
 
@@ -92,6 +108,7 @@ if (true)
     S = Sin(unCut);
     U = Uin(unCut);
     P = Pin(unCut);
+    Yr = Yrin(unCut);
     timFit = timFitin(unCut);    
 
     % Sampling frequency
@@ -224,48 +241,56 @@ disp([' '])
 disp(['Eta Galaxy: ' num2str(etaGalaxy) ' +- ' num2str(etaGalaxyUnc)])
 
 %% Figures
-
-
+close all
 % Time series
+
+t24 = find(longTim/sidYear<1);
+t25 = find(longTim/sidYear>=1);
+
+ylimit = 110;
+textHeight = -67;
+
 Rat = 9;
 figure(1)
 set(gcf,'position',[100 100 1600 750]);
 subplot(1,Rat,[1 Rat-1])
-l=plot(longTim/sidDay, longDat*1e15/(r*m), '.');
+l=plot(mod(longTim(t24),sidYear)/sidDay, longDat(t24)*1e15/(r*m), '.',mod(longTim(t25),sidYear)/sidDay, longDat(t25)*1e15/(r*m), '.');
 hold on
-ll=plot(timGalFit,longFit*1e15/(r*m), [213 213],[-80 80],'k--', [420 420],[-80 80],'k--', [486 486],[-80 80],'k--');
-text(180, -95, 'July 7, 2024','Interpreter', 'latex','FontSize',16)
-annotation(gcf,'line',[0.144 0.144],[0.06 0.11],'LineWidth',0.75);
-text(197, -50, '$0^\circ$','Interpreter', 'latex','FontSize',16)
-text(245, -50, '$180^\circ$','Interpreter', 'latex','FontSize',16)
-text(395, -50, '$180^\circ$','Interpreter', 'latex','FontSize',16)
-text(450, -50, '$0^\circ$','Interpreter', 'latex','FontSize',16)
-text(520, -50, '$180^\circ$','Interpreter', 'latex','FontSize',16)
+ll=plot(mod(timGalFit,sidYear/sidDay),longFit*1e15/(r*m), ...
+    [40 40],[-ylimit ylimit],'k--', [114 114],[-ylimit ylimit],'k--', [183 183],[-ylimit ylimit],'k--', ...
+    [211 211],[-ylimit ylimit],'k--', [284 284],[-ylimit ylimit],'k--');
+text(10, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
+text(70, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
+text(140, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
+text(192, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
+text(243, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
+text(320, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
-xlabel('Time (sidereal days since Jan. 1, 2024)','Interpreter', 'latex')
+xlabel('Time (sidereal days)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
-ylim([-80 80])
-xlim([0.96*min(longTim/sidDay) 1.01*max(longTim/sidDay)])
-legend('Data','Fit','Interpreter', 'latex')
+ylim([-ylimit ylimit])
+xlim([0 365])
+legend('2024 Data', '2025 Data', 'Fit','Interpreter', 'latex')
 grid on
 
 subplot(1,Rat,Rat)
 [n,x] = hist(longDat*1e15/(r*m),15);
 barh(x,n,1);
-ylim([-80 80])
+ylim([-ylimit ylimit])
 xlim([0 1.05*max(n)])
 set(gca,'YTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca, 'FontSize',16)
 
-axes('position',[.32 .6 .15 .25])
+axes('position',[.312 .71 .15 .25])
 zoomIndex = find(and(longTim/sidDay>=384.8,longTim/sidDay<=386.8));
 l=plot(longTim(zoomIndex)/sidDay, longDat(zoomIndex)*1e15/(r*m), '.');
 hold on
 zoomIndex2 = find(and(timGalFit>=384.8,timGalFit<=386.8));
+lll= plot(nan, nan);
 ll=plot(timGalFit(zoomIndex2),longFit(zoomIndex2)*1e15/(r*m));
 hold off
 grid on
@@ -277,45 +302,51 @@ set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
 set(gca, 'FontSize',14)
 
-annotation(gcf,'line',[0.47 0.4985],[0.6 0.31],'LineWidth',1.5);
-annotation(gcf,'line',[0.47 0.4985],[0.85 0.72],'LineWidth',1.5);
-annotation(gcf,'rectangle',[0.4985 0.31 0.004 0.41],'LineWidth',1.5);
+annotation(gcf,'line',[0.461 0.4985],[0.71 0.3675],'LineWidth',1.5);
+annotation(gcf,'line',[0.461 0.4985],[0.96 0.6675],'LineWidth',1.5);
+annotation(gcf,'rectangle',[0.4985 0.3675 0.004 0.3],'LineWidth',1.5);
 
 pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
 width = pos(3);
 height = pos(4);
 
 annotation(gcf,'rectangle',[0.135 0.135 0.675 0.1],'FaceColor',[0.90,0.90,0.90],'FaceAlpha',0);
-annotation(gcf,'rectangle',[0.135 0.135 0.053 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
-annotation(gcf,'rectangle',[0.562 0.135 0.12 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
-annotation(gcf,'rectangle',[0.188 0.135 0.12 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
-annotation(gcf,'rectangle',[0.485 0.135 0.077 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
-annotation(gcf,'rectangle',[0.682 0.135 0.128 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.135 0.135 0.07 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.205 0.135 0.14 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.345 0.135 0.13 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.475 0.135 0.051 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.526 0.135 0.138 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
+annotation(gcf,'rectangle',[0.664 0.135 0.146 0.1],'FaceColor',[0 0.282352941176471 0.470588235294118],'FaceAlpha',0.15, 'LineStyle','none');
 
 annotation(gcf,'line',[0.15+10/width 0.15+10/width],[0.2 0.2-40/height],'LineWidth',3);
 annotation(gcf,'ellipse',[0.15 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
 annotation(gcf,'ellipse',[0.15 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
 annotation(gcf,'arrow',[0.16 0.18],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'line',[0.25+10/width 0.25+10/width],[0.2 0.2-40/height],'LineWidth',3);
-annotation(gcf,'ellipse',[0.25 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.25 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'arrow',[0.26 0.28],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+annotation(gcf,'line',[0.26+10/width 0.26+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.26 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.26 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.27 0.29],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'line',[0.52+10/width 0.52+10/width],[0.2 0.2-40/height],'LineWidth',3);
-annotation(gcf,'ellipse',[0.52 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.52 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'arrow',[0.53 0.55],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+annotation(gcf,'line',[0.4+10/width 0.4+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.4 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.4 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'arrow',[0.41 0.43],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'line',[0.62+10/width 0.62+10/width],[0.2 0.2-40/height],'LineWidth',3);
-annotation(gcf,'ellipse',[0.62 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'ellipse',[0.62 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'arrow',[0.63 0.65],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+annotation(gcf,'line',[0.49+10/width 0.49+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.49 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.49 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.5 0.52],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
-annotation(gcf,'line',[0.75+10/width 0.75+10/width],[0.2 0.2-40/height],'LineWidth',3);
-annotation(gcf,'ellipse',[0.75 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
-annotation(gcf,'ellipse',[0.75 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
-annotation(gcf,'arrow',[0.76 0.78],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+annotation(gcf,'line',[0.59+10/width 0.59+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.59 0.2 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'ellipse',[0.59 0.2-40/height 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'arrow',[0.6 0.62],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
+
+annotation(gcf,'line',[0.73+10/width 0.73+10/width],[0.2 0.2-40/height],'LineWidth',3);
+annotation(gcf,'ellipse',[0.73 0.2 20/width 20/height],'FaceColor',[0.85,0.33,0.10]);
+annotation(gcf,'ellipse',[0.73 0.2-40/height 20/width 20/height],'FaceColor',[0.93,0.69,0.13]);
+annotation(gcf,'arrow',[0.74 0.76],[0.2-10/height 0.2-10/height],'LineWidth',2,'Color',[0.301960784313725 0.745098039215686 0.933333333333333]);
 
 
 %%
