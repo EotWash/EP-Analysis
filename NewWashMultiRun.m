@@ -46,11 +46,9 @@ if (true)
         "run6925Fits.mat" "run6926Fits.mat" "run6927Fits.mat" "run6930Fits.mat"...
         "run6931Fits.mat" "run6936Fits.mat" "run6939Fits.mat" "run6949Fits.mat"...
         "run6950Fits.mat" "run6954Fits.mat" "run6955Fits.mat" "run6956Fits.mat"...
-        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat"]; %"run6979Fits.mat","run6981Fits.mat",
-    runs=[runs,  "run6982Fits.mat"...
+        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat" "run6982Fits.mat"...
         "run6984Fits.mat", "run6985Fits.mat", "run6986Fits.mat", "run6987Fits.mat", "run6988Fits.mat"];
-    runP = [1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1]; % 1 if 0 deg, 0 if 180 deg
-    yr = [ones(1,25) 0*ones(1,8)];
+    runP = [1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1]; % 1 if 0 deg, 0 if 180 deg
 
     timFitin =[];
     Cin = [];
@@ -58,7 +56,6 @@ if (true)
     Uin = [];
     Pin = [];
     Uraw = [];
-    Yrin = [];
 
     for f=1:length(runs)
         
@@ -67,20 +64,12 @@ if (true)
         % Chi-squared cut        
         unCut = find(in.out(4,:)/thermAmp < thresh);
         
+        % Moved time zero to midnight Jan. 1, 2024
         if f == 1
            timOffset = floor(in.out(1,1)/sidYear);
         end
-
         timFitin = [timFitin (in.out(1,unCut) - timOffset*sidYear)];
 
-%         % Moved time zero to midnight Jan. 1, 2024
-%         if f<=find(runs=="run6905Fits.mat") %Last run of 2024
-%             % 2024 Runs
-%             timFitin = [timFitin mod(in.out(1,unCut),sidYear)];
-%         else
-%             % 2025 Runs
-%             timFitin = [timFitin mod(in.out(1,unCut),sidYear)+sidYear];
-%         end
         Cin = [Cin detrend(in.out(2,unCut))];
         Sin = [Sin detrend(in.out(3,unCut))];
         Uin = [Uin in.out(4,unCut)/thermAmp];
@@ -92,13 +81,6 @@ if (true)
         else %180 degrees
             Pin = [Pin in.out(4,unCut)*0-1];
         end
-
-        % Year marking
-        if yr(f) % 2024
-            Yrin = [Yrin in.out(4,unCut)*0+1];
-        else % 2025
-            Yrin = [Yrin in.out(4,unCut)*0-1];
-        end
     end
 
     % 2-sigma cuts
@@ -108,7 +90,6 @@ if (true)
     S = Sin(unCut);
     U = Uin(unCut);
     P = Pin(unCut);
-    Yr = Yrin(unCut);
     timFit = timFitin(unCut);    
 
     % Sampling frequency
@@ -241,7 +222,7 @@ disp([' '])
 disp(['Eta Galaxy: ' num2str(etaGalaxy) ' +- ' num2str(etaGalaxyUnc)])
 
 %% Figures
-close all
+
 % Time series
 
 t24 = find(longTim/sidYear<1);
@@ -267,7 +248,7 @@ text(243, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(320, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
-xlabel('Time (sidereal days)','Interpreter', 'latex')
+xlabel('Phase (sidereal days)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
