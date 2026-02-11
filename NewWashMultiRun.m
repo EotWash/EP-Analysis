@@ -5,7 +5,7 @@ close all
 
 w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-Q = 1.13e5;
+Q = 1.13e5; % Quality factor
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
@@ -32,7 +32,7 @@ filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
 
 % Chi-squared threshold from distribution fit
-thresh = 3.9112; %New threshold
+thresh = 3.9794;
 
 %% Data loading
 
@@ -123,9 +123,6 @@ lenMin = daySamples/4; % Minimum length of cut (samples)
 % Thermal noise circle
 thermPhi = linspace(0,2*pi,100); 
 thermCirc = thermAmp*(cos(thermPhi)+i*sin(thermPhi))+mean(torqFit);
-
-% Remove insanely large chi-squareds
-Uraw = Uraw(find(Uraw<20));
 
 %% Galaxy Fits
 
@@ -343,11 +340,11 @@ x = [-25 -20 -15 -10 -5 0 5 10 15 20 25];
 [n,x] = hist(real(torqGal)*1e15/(r*m), x);
 bar(x,n,1);
 hold on
-text(-23,33,['$\mu_{in}$ = ' num2str(mean(cGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
-text(5,33,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(-23,38,['$\mu_{in}$ = ' num2str(mean(cGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(5,38,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
 hold off
 xlim([-25 25])
-ylim([0 40])
+ylim([0 45])
 set(gca,'XTickLabel',[])
 set(gca,'XTick',x)
 set(gca,'XGrid','on','YGrid','off')
@@ -384,11 +381,11 @@ nexttile(8,[3,1])
 [n,x] = hist(imag(torqGal)*1e15/(r*m),x);
 barh(x,n,1);
 hold on
-text(33,23,['$\mu_{out}$ = ' num2str(mean(sGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
-text(33,-5,['$\sigma_{out}$ = ' num2str(std(sGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(38,23,['$\mu_{out}$ = ' num2str(mean(sGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(38,-5,['$\sigma_{out}$ = ' num2str(std(sGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
 hold off
 ylim([-25 25])
-xlim([0 40])
+xlim([0 45])
 set(gca,'YTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca,'YTick',x)
@@ -396,7 +393,7 @@ set(gca,'FontSize',16);
 
 %% Save plots
 
-if(false)
+if(true)
     fig2=figure(1);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');

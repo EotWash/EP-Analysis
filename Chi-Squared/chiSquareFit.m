@@ -1,5 +1,7 @@
 load("Uraw.mat")
 
+Uraw = Uraw(Uraw<10);
+
 [n,xh] = hist(Uraw,100);
 
 x0 = [sum(n),7,2];
@@ -14,7 +16,7 @@ figure(5)
 bar(xh,n,'FaceAlpha',0.5)
 hold on
 plot(xh,chi(x,xh),'LineWidth',2)
-plot([cutoff cutoff], [0 500],'k--','LineWidth',1.5)
+plot([cutoff cutoff], [0 300],'k--','LineWidth',1.5)
 hold off
 xlabel('Misfit-Squared (arb. units)','Interpreter', 'latex')
 ylabel('Number','Interpreter', 'latex')
