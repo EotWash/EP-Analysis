@@ -63,7 +63,7 @@ for injIndex = 1:length(injA)
 
     % Loading in galaxy basis funtions outputted from galVect.py
 
-    rawGal=load('Basis Functions\galVectMin0Deg.out');
+    rawGal=load('Basis Functions\galVectMin.out');
     galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
     timGal=(rawGal(:,1));
     inGal=detrend(rawGal(:,2));

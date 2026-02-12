@@ -4,8 +4,7 @@ warning('off')
 
 w0 = 2*pi*6.8567e-4; % Resonant frequency (rad*Hz)
 I = 3.78e-5; % Moment of inertia (kg-m^2)
-% Q = 2.89e5; % Quality factor
-Q = 1.13e5;
+Q = 1.13e5; % Quality factor
 kappa = I*w0^2; % Spring constance (N m/rad)
 kb = 1.38064852e-23; % Boltzmann's constant (J/K)
 T = 293; % Temperature (K)
@@ -20,17 +19,19 @@ Rsun = 149.6e9; % Radius from earth to sun (m)
 aSun = G*Msun/Rsun^2; % Acceleration towards sun (m/s^2)
 aEarth = 1.68e-2; % Acceleration towards center of Earth (m/s^2)
 aGalaxy =  5e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
-% aGalaxy =  9.7e-11; % Acceleration towards dark matter at center of Galaxy (m/s^2)
 
 sidDay = 86164.0905; % Sidereal day (s)
+sidYear = 31556926; %Sideral year (s)
 
-TTFreq = 0.457120e-3; % Turn table frequency (Hz)
+TTFreq = 0.4564e-3; % Turn table frequency (Hz)
+filtPhase = 53.69*pi/180; % Low-pass filter phase correction (rad)
+filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 
 % Thermal noise
 thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
 
-% Chi-squared threshold
-thresh = 7;
+% Chi-squared threshold from distribution fit
+thresh = 3.9794;
 
 %% Data loading
 
@@ -39,12 +40,14 @@ if (true)
     % Runs to load. Once per turntable cosine amplitude, sine amplitude, 
     % and misfit are calculated in NewWashAnalysis.m then loaded here
     runs = ["run6891Fits.mat" "run6893Fits.mat" ...
-       "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
+        "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
         "run6903Fits.mat" "run6904Fits.mat" "run6905Fits.mat" "run6923Fits.mat" ...
         "run6925Fits.mat" "run6926Fits.mat" "run6927Fits.mat" "run6930Fits.mat"...
         "run6931Fits.mat" "run6936Fits.mat" "run6939Fits.mat" "run6949Fits.mat"...
         "run6950Fits.mat" "run6954Fits.mat" "run6955Fits.mat" "run6956Fits.mat"...
-        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat"];
+        "run6958Fits.mat" "run6962Fits.mat" "run6964Fits.mat" "run6982Fits.mat"...
+        "run6984Fits.mat", "run6985Fits.mat", "run6986Fits.mat", "run6987Fits.mat", "run6988Fits.mat"];
+    runP = [1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1]; % 1 if 0 deg, 0 if 180 deg
 
     timFitin =[];
     Cin = [];
@@ -61,22 +64,20 @@ if (true)
         unCut = find(in.out(4,:)/thermAmp < thresh);
         
         % Moved time zero to midnight Jan. 1, 2024
-        if f<10
-            % 2024 Runs
-            timFitin = [timFitin mod(in.out(1,unCut),31556926)];
-        else
-            % 2025 Runs
-            timFitin = [timFitin mod(in.out(1,unCut),31556926)+31556926];
+        if f == 1
+           timOffset = floor(in.out(1,1)/sidYear);
         end
+        timFitin = [timFitin (in.out(1,unCut) - timOffset*sidYear)];
+
         Cin = [Cin detrend(in.out(2,unCut))];
         Sin = [Sin detrend(in.out(3,unCut))];
         Uin = [Uin in.out(4,unCut)/thermAmp];
         Uraw = [Uraw in.out(4,:)/thermAmp];
-        
+
         % Pendulum flips
-        if or(f<3,and(f>13,f<20))
+        if runP(f) %0 degrees
             Pin = [Pin in.out(4,unCut)*0+1];
-        else 
+        else %180 degrees
             Pin = [Pin in.out(4,unCut)*0-1];
         end
     end
@@ -93,11 +94,11 @@ if (true)
     timFit = timFitin(unCut);
     
     % Sampling frequency
-    sampF = 1/(timFit(5)-timFit(4));
+    sampF = 1/(mode(round(diff(timFit),3)));
 
     % Loading in galaxy basis funtions outputted from galVect.py
     rawGal=load('Basis Functions\galVectMin.out');
-    galSampF = 1/(rawGal(2,1)-rawGal(1,1))/3600/24;
+    galSampF = 1/(rawGal(2,1)-rawGal(1,1))/sidDay;
     timGal=decimate(rawGal(:,1),floor(galSampF/sampF));
     inGal=(decimate(rawGal(:,2),floor(galSampF/sampF)));
     outGal=(decimate(rawGal(:,3),floor(galSampF/sampF)));
@@ -107,10 +108,10 @@ if (true)
 end
 
 % Length of days
-lenDays = ceil((timFit(end)-timFit(1))/24/3600);
+lenDays = ceil((timFit(end)-timFit(1))/sidDay);
 
 % Calculate complex torque amplitude
-torqFit = P.*(C+i*S);
+torqFit = filtAt*(cos(filtPhase)+i*sin(filtPhase))*P.*(C+i*S);
 
 % %% Injection Controls
 injEx = [];
@@ -120,13 +121,7 @@ inj = linspace(-10,10,21)*1e-5;
 
 for injIndex = 1:length(inj)
 
-    injAmp = inj(injIndex)*(r*m*aGalaxy);
-    
-    % Quadrature injection    
-%     torqFit = injAmp*inGal';
-%     timFit = timGal'*24*3600;
-%     P = ones(length(inGal),1);
-%     U = 0*P';
+    injAmp = inj(injIndex)*(r*m*aGalaxy);    
     
     
     % Fit parameters
@@ -134,7 +129,7 @@ for injIndex = 1:length(inj)
     wDay = 2*pi*fDay; % Daily frequency (rad*Hz)
     daySamples = floor(sampF/fDay); % Samples in a day
     numDaysFit = 2; % Length of cuts (days)
-    lenMin = 0*numDaysFit; % Minimum length of cut (samples)
+    lenMin = daySamples/4; % Minimum length of cut (samples)
     
     % Thermal noise circle
     thermPhi = linspace(0,2*pi,100); 
@@ -160,7 +155,7 @@ for injIndex = 1:length(inj)
     for index = 0:lenDays/numDaysFit
     
         % Find cut indices
-        indexCut = find(floor((timFit-timFit(1))/24/3600/numDaysFit)==index);
+        indexCut = find(floor((timFit-timFit(1))/sidDay/numDaysFit)==index);
     
         % Cut vectors
         cut = timFit(indexCut);
@@ -171,7 +166,7 @@ for injIndex = 1:length(inj)
         % Sync basis function and data 
         galIndex = [];
         for cutGal = cut
-            [m,minI] = min(abs(timGal-cutGal/24/3600));
+            [~,minI] = min(abs(timGal-cutGal/sidDay));
             galIndex = [galIndex minI];
         end
 
@@ -226,11 +221,11 @@ end
 figure(1)
 ll = errorbar(inj*1e5, injEx*1e5, injUnc*1e5,'.');
 hold on
-l = plot(inj*1e5,inj*1e5+5.6e-1);
+l = plot(inj*1e5,inj*1e5+0.8);
 hold off
 xlabel('$\eta \times 10^{-5}$ Injected','Interpreter', 'latex')
 ylabel('$\eta \times 10^{-5}$ Recovered','Interpreter', 'latex')
-legend('Injections', 'Unity Slope, Offset $\eta=5.6\times10^{-6}$','Interpreter', 'latex')
+legend('Injections', 'Unity Slope, Offset $\eta=8\times10^{-6}$','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(ll,'LineWidth',2);
 set(ll,'MarkerSize',16);
