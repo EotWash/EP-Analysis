@@ -1,4 +1,4 @@
-warning('off')
+% warning('off')
 
 %% Parameters
 
@@ -26,20 +26,20 @@ if (true)
     % Load vectors form tdms
 
     %Michael's path
-    inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
-    inDiff = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
-    inSum = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Sum");
-    inTim = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Time");
-    inCycle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="CycleMark");
-    setFreq = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="SetFrequency"); %frequency which TT set to
+    % inTTAngle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
+    % inDiff = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
+    % inSum = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Sum");
+    % inTim = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Time");
+    % inCycle = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="CycleMark");
+    % setFreq = tdmsread(['G:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="SetFrequency"); %frequency which TT set to
 
     %Shoshana's Path
-%     inTTAngle = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
-%     inDiff = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
-%     inSum = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Sum");
-%     inTim = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Time");
-%     inCycle = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="CycleMark");
-%     setFreq = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="SetFrequency"); %frequency which TT set to
+    inTTAngle = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Angle");
+    inDiff = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Diff");
+    inSum = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Sum");
+    inTim = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="Time");
+    inCycle = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="CycleMark");
+    setFreq = tdmsread(['H:\Shared drives\Eot-Wash\NewWash\Data\' run '.tdms'], ChannelGroup="raw_data", ChannelNames="SetFrequency"); %frequency which TT set to
 
     % Flatten vectors
     inTTAngle = table2array(inTTAngle{1});
@@ -93,18 +93,18 @@ ttFit = TTAngle(2e3:end);
 %% ASD Calculation
 
 nAv = 1;
-[A, F] = asd2(theta, 1/sampF, nAv, 3, @hann);
-[Af, Ff] = asd2(torqFilt, 1/sampF, nAv, 3, @hann);
-[Aff, Fff] = asd2(tqFit, 1/sampF, nAv, 3, @hann);
-
-%% Themal Limit
-
-w = 2*pi*F;
-
-R = 1./(1-w.^2/w0.^2-1i/Q)/kappa; %% Torq to Angle Response
-
-thermT = abs(sqrt(4*kb*T*(kappa/Q).*(1./w)));
-thermA = abs(R.*thermT);
+% [A, F] = asd2(theta, 1/sampF, nAv, 3, @hann);
+% [Af, Ff] = asd2(torqFilt, 1/sampF, nAv, 3, @hann);
+% [Aff, Fff] = asd2(tqFit, 1/sampF, nAv, 3, @hann);
+% 
+% %% Themal Limit
+% 
+% w = 2*pi*F;
+% 
+% R = 1./(1-w.^2/w0.^2-1i/Q)/kappa; %% Torq to Angle Response
+% 
+% thermT = abs(sqrt(4*kb*T*(kappa/Q).*(1./w)));
+% thermA = abs(R.*thermT);
 
 %% Fits
 
@@ -145,7 +145,7 @@ for index = 0:floor(length(tFit)/fitSamples)-1
     y = tqFit(index*fitSamples+1:(index+1)*fitSamples+1);
 
     % Linear least squares fitting to basis functions
-    a = inv(x'*x)*x'*y;
+    a = (x'*x)\x'*y;
     
     % Extract relavent fit parameters
     C = [C a(1)];

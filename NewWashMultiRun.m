@@ -171,8 +171,8 @@ for index = 0:lenDays/numDaysFit
             if not(isempty(x))
 
                 % Linear least squares fitting to basis functions
-                a = inv(x'*x)*x'*y';
-            
+                  a = (x'*x)\x'*y';
+
                 % Append valid data points
                 if ((a(1)~=0))
                     cGal = [cGal real(a(1))];
