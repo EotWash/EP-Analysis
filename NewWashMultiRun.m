@@ -271,7 +271,7 @@ zoomIndex = find(and(longTim/sidDay>=384.8,longTim/sidDay<=386.8));
 l=plot(longTim(zoomIndex)/sidDay, longDat(zoomIndex)*1e15/(r*m), '.');
 hold on
 zoomIndex2 = find(and(timGalFit>=384.8,timGalFit<=386.8));
-lll= plot(nan, nan);
+% lll= plot(nan, nan);
 ll=plot(timGalFit(zoomIndex2),longFit(zoomIndex2)*1e15/(r*m));
 hold off
 grid on
