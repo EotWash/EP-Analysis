@@ -393,7 +393,7 @@ set(gca,'FontSize',16);
 
 %% Save plots
 
-if(true)
+if(false)
     fig2=figure(1);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');

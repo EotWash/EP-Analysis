@@ -93,18 +93,18 @@ ttFit = TTAngle(2e3:end);
 %% ASD Calculation
 
 nAv = 1;
-% [A, F] = asd2(theta, 1/sampF, nAv, 3, @hann);
-% [Af, Ff] = asd2(torqFilt, 1/sampF, nAv, 3, @hann);
-% [Aff, Fff] = asd2(tqFit, 1/sampF, nAv, 3, @hann);
-% 
-% %% Themal Limit
-% 
-% w = 2*pi*F;
-% 
-% R = 1./(1-w.^2/w0.^2-1i/Q)/kappa; %% Torq to Angle Response
-% 
-% thermT = abs(sqrt(4*kb*T*(kappa/Q).*(1./w)));
-% thermA = abs(R.*thermT);
+[A, F] = asd2(theta, 1/sampF, nAv, 3, @hann);
+[Af, Ff] = asd2(torqFilt, 1/sampF, nAv, 3, @hann);
+[Aff, Fff] = asd2(tqFit, 1/sampF, nAv, 3, @hann);
+
+%% Themal Limit
+
+w = 2*pi*F;
+
+R = 1./(1-w.^2/w0.^2-1i/Q)/kappa; %% Torq to Angle Response
+
+thermT = abs(sqrt(4*kb*T*(kappa/Q).*(1./w)));
+thermA = abs(R.*thermT);
 
 %% Fits
 
