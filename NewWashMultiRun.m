@@ -232,7 +232,9 @@ Rat = 9;
 figure(1)
 set(gcf,'position',[100 100 1600 750]);
 subplot(1,Rat,[1 Rat-1])
-l=plot(mod(longTim(t24),sidYear)/sidDay, longDat(t24)*1e15/(r*m), '.',mod(longTim(t25),sidYear)/sidDay, longDat(t25)*1e15/(r*m), '.');
+% l=plot(mod(longTim(t24),sidYear)/sidDay, longDat(t24)*1e15/(r*m), '.',mod(longTim(t25),sidYear)/sidDay, longDat(t25)*1e15/(r*m), '.');
+l=plot(mod(longTim,sidYear)/sidDay, longDat*1e15/(r*m), '.');
+
 hold on
 ll=plot(mod(timGalFit,sidYear/sidDay),longFit*1e15/(r*m), ...
     [40 40],[-ylimit ylimit],'k--', [114 114],[-ylimit ylimit],'k--', [183 183],[-ylimit ylimit],'k--', ...
@@ -251,7 +253,8 @@ set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
 ylim([-ylimit ylimit])
 xlim([0 365])
-legend('2024 Data', '2025 Data', 'Fit','Interpreter', 'latex')
+legend('Data', 'Fit','Interpreter', 'latex')
+
 grid on
 
 subplot(1,Rat,Rat)
@@ -393,7 +396,7 @@ set(gca,'FontSize',16);
 
 %% Save plots
 
-if(false)
+if(true)
     fig2=figure(1);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
