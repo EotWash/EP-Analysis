@@ -29,7 +29,7 @@ filtPhase = 53.69*pi/180; % Low-pass filter phase correction (rad)
 filtAt = 1/0.9958; % Low-pass filter amplitude correction (rad)
 
 % Thermal noise
-thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq)); 
+thermAmp = abs(sqrt(4*kb*T*(kappa/Q).*(1./(2*pi*TTFreq))))*sqrt((2*pi*TTFreq));
 
 % Chi-squared threshold from distribution fit
 thresh = 3.9794;
@@ -38,7 +38,7 @@ thresh = 3.9794;
 
 if (true)
 
-    % Runs to load. Once per turntable cosine amplitude, sine amplitude, 
+    % Runs to load. Once per turntable cosine amplitude, sine amplitude,
     % and misfit are calculated in NewWashAnalysis.m then loaded here
     runs = ["run6891Fits.mat" "run6893Fits.mat" ...
         "run6895Fits.mat" "run6896Fits.mat" "run6897Fits.mat" "run6900Fits.mat" ...
@@ -58,15 +58,15 @@ if (true)
     Uraw = [];
 
     for f=1:length(runs)
-        
-        in = load("Fits\"+runs(f));        
 
-        % Chi-squared cut        
+        in = load("Fits\"+runs(f));
+
+        % Chi-squared cut
         unCut = find(in.out(4,:)/thermAmp < thresh);
-        
+
         % Moved time zero to midnight Jan. 1, 2024
         if f == 1
-           timOffset = floor(in.out(1,1)/sidYear);
+            timOffset = floor(in.out(1,1)/sidYear);
         end
         timFitin = [timFitin (in.out(1,unCut) - timOffset*sidYear)];
 
@@ -90,7 +90,7 @@ if (true)
     S = Sin(unCut);
     U = Uin(unCut);
     P = Pin(unCut);
-    timFit = timFitin(unCut);    
+    timFit = timFitin(unCut);
 
     % Sampling frequency
     sampF = 1/(mode(round(diff(timFit),3)));
@@ -121,7 +121,7 @@ numDaysFit = 2; % Length of cuts (days)
 lenMin = daySamples/4; % Minimum length of cut (samples)
 
 % Thermal noise circle
-thermPhi = linspace(0,2*pi,100); 
+thermPhi = linspace(0,2*pi,100);
 thermCirc = thermAmp*(cos(thermPhi)+i*sin(thermPhi))+mean(torqFit);
 
 %% Galaxy Fits
@@ -138,7 +138,10 @@ longFit = [];
 longTim = [];
 longDat = [];
 longU = [];
-
+sGalPlot=[];
+cGalPlot=[];
+InGal=[];
+nexttemp=[];
 for index = 0:lenDays/numDaysFit
 
     % Find cut indices
@@ -149,21 +152,21 @@ for index = 0:lenDays/numDaysFit
     pol = sign(mean(P(indexCut)));
     u = U(indexCut);
     y = torqFit(indexCut)-mean(torqFit(indexCut));
-  
-    if not(isempty(cut))   
+
+    if not(isempty(cut))
         if (length(y)>=lenMin)
 
-            % Sync basis function and data 
+            % Sync basis function and data
             galIndex = [];
             for cutGal = cut
                 [~,minI] = min(abs(timGal-cutGal/sidDay)); % CORRECTED
                 galIndex = [galIndex minI];
             end
-            
+
             % Design matrix
             x = [inGal(galIndex)+i*outGal(galIndex)];
-            
-            % Long basis functions for plotting 
+
+            % Long basis functions for plotting
             galLongIndex = find(and(timGal>=(index*numDaysFit+timFit(1)/sidDay),...
                 timGal<=((index+1)*numDaysFit)+timFit(1)/sidDay));
             xLong = [inGal(galLongIndex)+i*outGal(galLongIndex)];
@@ -171,10 +174,16 @@ for index = 0:lenDays/numDaysFit
             if not(isempty(x))
 
                 % Linear least squares fitting to basis functions
-                  a = (x'*x)\x'*y';
+                a = (x'*x)\x'*y';
 
                 % Append valid data points
                 if ((a(1)~=0))
+                    if any(indexCut==find(mod(timFit/sidDay,sidYear)>=195.3,1,'first')) %For zoom plot
+                        InGal=galIndex;
+                        cGalPlot=real(a(1));
+                        sGalPlot=imag(a(1));
+                    end
+
                     cGal = [cGal real(a(1))];
                     sGal = [sGal imag(a(1))];
                     uGal = [uGal std(a'*x'-y)];
@@ -184,14 +193,14 @@ for index = 0:lenDays/numDaysFit
                     longTim = [longTim timFit(indexCut)];
                     longDat = [longDat (real(y)+imag(y))/2];
                     longU = [longU u];
-        
+
                     % Add nans to long to allow gaps in plots
                     longFit = [longFit nan];
                     longTim = [longTim nan];
                     longDat = [longDat nan];
                     longU = [longU nan];
                     timGalFit = [timGalFit; nan];
-        
+
                 end
             end
         end
@@ -204,9 +213,7 @@ torqGal = cGal+i*sGal;
 % Mean and uncertainty of in-phase torque
 ampGal = mean(cGal);
 uncGal = std(cGal)/sqrt(length(sGal));
-
 %%
-
 % Eotvos parameters
 etaGalaxy = ampGal/(r*m*aGalaxy);
 etaGalaxyUnc = uncGal/(r*m*aGalaxy);
@@ -230,6 +237,7 @@ textHeight = -67;
 
 Rat = 9;
 figure(1)
+clf
 set(gcf,'position',[100 100 1600 750]);
 subplot(1,Rat,[1 Rat-1])
 % l=plot(mod(longTim(t24),sidYear)/sidDay, longDat(t24)*1e15/(r*m), '.',mod(longTim(t25),sidYear)/sidDay, longDat(t25)*1e15/(r*m), '.');
@@ -245,9 +253,11 @@ text(140, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(192, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
 text(243, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(320, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
+patch([194.9 196.9 196.9 194.9],[-45 -45 45 45],'red','EdgeColor','k','FaceColor','none','LineWidth',1.5)
+
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
-xlabel('Phase (sidereal days)','Interpreter', 'latex')
+xlabel('Galactic Phase (sidereal days)','Interpreter', 'latex')
 set(gca,'FontSize',16);
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
@@ -257,6 +267,8 @@ legend('Data', 'Fit','Interpreter', 'latex')
 
 grid on
 
+
+%Hist subplot
 subplot(1,Rat,Rat)
 [n,x] = hist(longDat*1e15/(r*m),15);
 barh(x,n,1);
@@ -266,30 +278,32 @@ set(gca,'YTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca, 'FontSize',16)
 
-axes('position',[.312 .71 .15 .25])
-zoomIndex = find(and(longTim/sidDay>=384.8,longTim/sidDay<=386.8));
-l=plot(longTim(zoomIndex)/sidDay, longDat(zoomIndex)*1e15/(r*m), '.');
+%Zoom Subplot
+axes('position',[.318 .71 .15 .25])
+
+tempTim=InGal(1)-7:InGal(end)+5;
+ZoomFit=(cGalPlot+i*sGalPlot)*(inGal(tempTim)+i*outGal(tempTim))-mean((cGalPlot+i*sGalPlot)*(inGal(tempTim)+i*outGal(tempTim)));
+zoomIndex = find(and(mod(longTim,sidYear)/sidDay>=194.9,mod(longTim,sidYear)/sidDay<=196.9));
+l=plot(mod(longTim(zoomIndex),sidYear)/sidDay, longDat(zoomIndex)*1e15/(r*m), '.');
 hold on
-zoomIndex2 = find(and(timGalFit>=384.8,timGalFit<=386.8));
-% lll= plot(nan, nan);
-ll=plot(timGalFit(zoomIndex2),longFit(zoomIndex2)*1e15/(r*m));
+ll=plot(mod(timGal(tempTim),sidYear),ZoomFit*1e15/(r*m));
+
 hold off
 grid on
 box on
 set(gca, 'LineWidth',1.5)
-xlim([384.9 386.8])
+xlim([194.8 196.95])
 ylim([-40 40])
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
 set(gca, 'FontSize',14)
 
-annotation(gcf,'line',[0.461 0.4985],[0.71 0.3675],'LineWidth',1.5);
-annotation(gcf,'line',[0.461 0.4985],[0.96 0.6675],'LineWidth',1.5);
-annotation(gcf,'rectangle',[0.4985 0.3675 0.004 0.3],'LineWidth',1.5);
-
 pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
 width = pos(3);
 height = pos(4);
+
+annotation(gcf,'line',[0.4680 0.4961],[0.71 0.351],'LineWidth',1.7);
+annotation(gcf,'line',[0.4680 0.4961],[0.96 0.685],'LineWidth',1.7);
 
 annotation(gcf,'rectangle',[0.135 0.135 0.675 0.1],'FaceColor',[0.90,0.90,0.90],'FaceAlpha',0);
 annotation(gcf,'rectangle',[0.135 0.135 0.07 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
@@ -333,26 +347,27 @@ annotation(gcf,'arrow',[0.74 0.76],[0.2-10/height 0.2-10/height],'LineWidth',2,'
 %%
 % Galactic DM fits
 figure(3)
-set(gcf,'position',[100 100 600 600]);
+clf
+set(gcf,'position',[100 100 700 700]);
 uncPhi = linspace(0,2*pi,100);
 uncCirc = (std(cGal)/sqrt(length(cGal))*cos(thermPhi)+mean(cGal))...
-        +i*(std(sGal)/sqrt(length(sGal))*sin(thermPhi)+mean(sGal));
+    +i*(std(sGal)/sqrt(length(sGal))*sin(thermPhi)+mean(sGal));
 tiledlayout(4,4)
 nexttile([1,3])
-x = [-25 -20 -15 -10 -5 0 5 10 15 20 25];
+x = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
+
 [n,x] = hist(real(torqGal)*1e15/(r*m), x);
 bar(x,n,1);
 hold on
 text(-23,38,['$\mu_{in}$ = ' num2str(mean(cGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
 text(5,38,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
 hold off
-xlim([-25 25])
+xlim([min(x) max(x)])
 ylim([0 45])
 set(gca,'XTickLabel',[])
 set(gca,'XTick',x)
 set(gca,'XGrid','on','YGrid','off')
 set(gca,'FontSize',16);
-
 nexttile(5,[3,3])
 
 t0 = find(pGal>0);
@@ -373,11 +388,12 @@ set(l,'LineWidth',2);
 set(ll,'LineWidth',2);
 set(lll,'LineWidth',1.5);
 set(lll,'MarkerSize',10);
-ylim([-25 25])
-xlim([-25 25])
+ylim([min(x) max(x)])
+xlim([min(x) max(x)])
 set(gca,'XTick',x)
 set(gca,'YTick',x)
-
+xticks([-30 -20 -10 0 10 20 30])
+yticks([-30 -20 -10 0 10 20 30])
 grid on
 
 nexttile(8,[3,1])
@@ -387,13 +403,12 @@ hold on
 text(38,23,['$\mu_{out}$ = ' num2str(mean(sGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
 text(38,-5,['$\sigma_{out}$ = ' num2str(std(sGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
 hold off
-ylim([-25 25])
+ylim([-35 35])
 xlim([0 45])
 set(gca,'YTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca,'YTick',x)
 set(gca,'FontSize',16);
-
 %% Save plots
 
 if(true)
@@ -402,7 +417,7 @@ if(true)
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
     print(fig2,'EP_TimeSeries.pdf','-dpdf','-r1200')
-    
+
     fig2=figure(3);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
