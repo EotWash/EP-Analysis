@@ -138,7 +138,7 @@ torqGal = cGal+i*sGal;
 
 %% Monte Carlo
 
-mcN = 1e4; % Number of Monte Carlo samples
+mcN = 1e3; % Number of Monte Carlo samples
 
 % Vector creation
 cVect = [];
@@ -308,11 +308,13 @@ tiledlayout(4,4)
 nexttile([1,3])
 x = [-2.5 -2.0 -1.5 -1.0 -.5 0 .5 1.0 1.5 2.0 2.5];
 
+labelH = 320;
+
 [n,x] = hist(cVect*1e15/(r*m), x);
 bar(x,n,1);
 hold on
-text(-2,300,['$\mu_{in}$ = ' num2str(mean(cVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
-text(0.9,300,['$\sigma_{in}$ = ' num2str(std(cVect)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(-2.4,labelH,['$\mu_{in}$ = ' num2str(mean(cVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(1.1,labelH,['$\sigma_{in}$ = ' num2str(std(cVect)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
 hold off
 xlim([min(x) max(x)])
 ylim([0 max(n)*1.2])
@@ -343,8 +345,8 @@ nexttile(8,[3,1])
 [n,x] = hist(sVect*1e15/(r*m),x);
 barh(x,n,1);
 hold on
-text(300,2.3,['$\mu_{out}$ = ' num2str(mean(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
-text(300,-.5,['$\sigma_{out}$ = ' num2str(std(sVect)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(labelH,2.4,['$\mu_{out}$ = ' num2str(mean(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(labelH,-1.1,['$\sigma_{out}$ = ' num2str(std(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
 hold off
 ylim([min(x) max(x)])
 xlim([0 max(n)*1.2])
