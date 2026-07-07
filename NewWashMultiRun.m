@@ -191,7 +191,7 @@ for index = 0:lenDays/numDaysFit
                     timGalFit = [timGalFit; timGal(galLongIndex)];
                     longFit = [longFit (a'*xLong')-mean(a'*xLong')];
                     longTim = [longTim timFit(indexCut)];
-                    longDat = [longDat (real(y)+imag(y))/2];
+                    longDat = [longDat y];
                     longU = [longU u];
 
                     % Add nans to long to allow gaps in plots
