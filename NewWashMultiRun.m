@@ -227,24 +227,23 @@ disp(['Eta Galaxy: ' num2str(etaGalaxy) ' +- ' num2str(etaGalaxyUnc)])
 
 %% Figures
 
-% Time series
-
 t24 = find(longTim/sidYear<1);
 t25 = find(longTim/sidYear>=1);
 
-ylimit = 110;
-textHeight = -67;
+% Time series
+ylimit = 175;
+textHeight = -85;
+zoomFirst = 184;
+zoomEnd = zoomFirst+5;
 
 Rat = 9;
 figure(1)
 clf
 set(gcf,'position',[100 100 1600 750]);
 subplot(1,Rat,[1 Rat-1])
-% l=plot(mod(longTim(t24),sidYear)/sidDay, longDat(t24)*1e15/(r*m), '.',mod(longTim(t25),sidYear)/sidDay, longDat(t25)*1e15/(r*m), '.');
 l=plot(mod(longTim,sidYear)/sidDay, longDat*1e15/(r*m), '.');
-
 hold on
-ll=plot(mod(timGalFit,sidYear/sidDay),longFit*1e15/(r*m), ...
+ll=plot(mod(timGalFit,sidYear/sidDay),longFit*1e15/(r*m),...
     [40 40],[-ylimit ylimit],'k--', [114 114],[-ylimit ylimit],'k--', [183 183],[-ylimit ylimit],'k--', ...
     [211 211],[-ylimit ylimit],'k--', [284 284],[-ylimit ylimit],'k--');
 text(10, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
@@ -253,8 +252,7 @@ text(140, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(192, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
 text(243, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(320, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
-patch([194.9 196.9 196.9 194.9],[-45 -45 45 45],'red','EdgeColor','k','FaceColor','none','LineWidth',1.5)
-
+patch([zoomFirst zoomEnd zoomEnd zoomFirst],[-75 -75 75 75],'red','EdgeColor','k','FaceColor','none','LineWidth',1.5)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
 xlabel('Galactic Phase (sidereal days)','Interpreter', 'latex')
@@ -264,14 +262,11 @@ set(ll,'LineWidth',1.5);
 ylim([-ylimit ylimit])
 xlim([0 365])
 legend('Data', 'Fit','Interpreter', 'latex')
-
 grid on
-
-
 %Hist subplot
 subplot(1,Rat,Rat)
-[n,x] = hist(longDat*1e15/(r*m),15);
-barh(x,n,1);
+[n,xh] = hist(real(longDat)*1e15/(r*m),15);
+barh(xh,n,1);
 ylim([-ylimit ylimit])
 xlim([0 1.05*max(n)])
 set(gca,'YTickLabel',[])
@@ -279,21 +274,19 @@ set(gca,'XGrid','off','YGrid','on')
 set(gca, 'FontSize',16)
 
 %Zoom Subplot
-axes('position',[.318 .71 .15 .25])
+axes('position',[.3 .73 .15 .251])
 
-tempTim=InGal(1)-7:InGal(end)+5;
-ZoomFit=(cGalPlot+i*sGalPlot)*(inGal(tempTim)+i*outGal(tempTim))-mean((cGalPlot+i*sGalPlot)*(inGal(tempTim)+i*outGal(tempTim)));
-zoomIndex = find(and(mod(longTim,sidYear)/sidDay>=194.9,mod(longTim,sidYear)/sidDay<=196.9));
-l=plot(mod(longTim(zoomIndex),sidYear)/sidDay, longDat(zoomIndex)*1e15/(r*m), '.');
+zoomIndex = find(and(mod(timFit,sidYear)/sidDay>=zoomFirst,mod(timFit,sidYear)/sidDay<=zoomEnd));
+zoomIndexGal = find(and(mod(timGal,sidYear)>=zoomFirst,mod(timGal,sidYear)<=zoomEnd));
+l=plot(mod(timFit(zoomIndex),sidYear)/sidDay, real(longDat(zoomIndex))*1e15/(r*m), '.');
 hold on
-ll=plot(mod(timGal(tempTim),sidYear),ZoomFit*1e15/(r*m));
-
+ll=plot(mod(timGal(zoomIndexGal),sidYear),(real(longFit(zoomIndexGal)))*1e15/(r*m));
 hold off
 grid on
 box on
 set(gca, 'LineWidth',1.5)
-xlim([194.8 196.95])
-ylim([-40 40])
+xlim([zoomFirst zoomEnd])
+ylim([-75 75])
 set(l,'MarkerSize',16);
 set(ll,'LineWidth',1.5);
 set(gca, 'FontSize',14)
@@ -302,8 +295,8 @@ pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
 width = pos(3);
 height = pos(4);
 
-annotation(gcf,'line',[0.4680 0.4961],[0.71 0.351],'LineWidth',1.7);
-annotation(gcf,'line',[0.4680 0.4961],[0.96 0.685],'LineWidth',1.7);
+annotation(gcf,'line',[0.45 0.476],[0.73 0.35],'LineWidth',1.7);
+annotation(gcf,'line',[0.45 0.476],[0.981 0.69],'LineWidth',1.7);
 
 annotation(gcf,'rectangle',[0.135 0.135 0.675 0.1],'FaceColor',[0.90,0.90,0.90],'FaceAlpha',0);
 annotation(gcf,'rectangle',[0.135 0.135 0.07 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
@@ -348,24 +341,25 @@ annotation(gcf,'arrow',[0.74 0.76],[0.2-10/height 0.2-10/height],'LineWidth',2,'
 % Galactic DM fits
 figure(3)
 clf
-set(gcf,'position',[100 100 700 700]);
+set(gcf,'position',[100 100 900 900]);
 uncPhi = linspace(0,2*pi,100);
 uncCirc = (std(cGal)/sqrt(length(cGal))*cos(thermPhi)+mean(cGal))...
     +i*(std(sGal)/sqrt(length(sGal))*sin(thermPhi)+mean(sGal));
 tiledlayout(4,4)
 nexttile([1,3])
 x = [-35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35];
+xt = [-30 -20 -10 0 10 20 30];
 
 [n,x] = hist(real(torqGal)*1e15/(r*m), x);
 bar(x,n,1);
 hold on
-text(-23,38,['$\mu_{in}$ = ' num2str(mean(cGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
-text(5,38,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(-29,38,['$\mu_{in}$ = ' num2str(mean(cGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(9,38,['$\sigma_{in}$ = ' num2str(std(cGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
 hold off
 xlim([min(x) max(x)])
 ylim([0 45])
 set(gca,'XTickLabel',[])
-set(gca,'XTick',x)
+set(gca,'XTick',xt)
 set(gca,'XGrid','on','YGrid','off')
 set(gca,'FontSize',16);
 nexttile(5,[3,3])
@@ -390,25 +384,28 @@ set(lll,'LineWidth',1.5);
 set(lll,'MarkerSize',10);
 ylim([min(x) max(x)])
 xlim([min(x) max(x)])
-set(gca,'XTick',x)
-set(gca,'YTick',x)
-xticks([-30 -20 -10 0 10 20 30])
-yticks([-30 -20 -10 0 10 20 30])
+set(gca,'XTick',xt)
+set(gca,'YTick',xt)
+% xticks([-30 -20 -10 0 10 20 30])
+xticks(xt)
+yticks(xt)
+% yticks([-30 -20 -10 0 10 20 30])
 grid on
 
 nexttile(8,[3,1])
 [n,x] = hist(imag(torqGal)*1e15/(r*m),x);
 barh(x,n,1);
 hold on
-text(38,23,['$\mu_{out}$ = ' num2str(mean(sGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
-text(38,-5,['$\sigma_{out}$ = ' num2str(std(sGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(38,29,['$\mu_{out}$ = ' num2str(mean(sGal)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(38,-9,['$\sigma_{out}$ = ' num2str(std(sGal)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
 hold off
 ylim([-35 35])
 xlim([0 45])
 set(gca,'YTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
-set(gca,'YTick',x)
+set(gca,'YTick',xt)
 set(gca,'FontSize',16);
+
 %% Save plots
 
 if(true)
