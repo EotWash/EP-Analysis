@@ -196,6 +196,8 @@ disp(['Eta Galaxy: ' num2str(etaGalaxy) ' +- ' num2str(etaGalaxyUnc)])
 % Time series
 ylimit = 175;
 textHeight = -85;
+zoomFirst = 184;
+zoomEnd = zoomFirst+5;
 
 Rat = 9;
 figure(1)
@@ -213,7 +215,7 @@ text(140, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(192, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
 text(243, textHeight, '$180^\circ$','Interpreter', 'latex','FontSize',16)
 text(320, textHeight, '$0^\circ$','Interpreter', 'latex','FontSize',16)
-patch([194.9 196.9 196.9 194.9],[-45 -45 45 45],'red','EdgeColor','k','FaceColor','none','LineWidth',1.5)
+patch([zoomFirst zoomEnd zoomEnd zoomFirst],[-75 -75 75 75],'red','EdgeColor','k','FaceColor','none','LineWidth',1.5)
 hold off
 ylabel('Acceleration Amplitude (fm/s$^2$)','Interpreter', 'latex')
 xlabel('Galactic Phase (sidereal days)','Interpreter', 'latex')
@@ -235,10 +237,8 @@ set(gca,'XGrid','off','YGrid','on')
 set(gca, 'FontSize',16)
 
 %Zoom Subplot
-axes('position',[.325 .695 .15 .25])
+axes('position',[.3 .73 .15 .251])
 
-zoomFirst = 184;
-zoomEnd = 189;
 zoomIndex = find(and(mod(timFit,sidYear)/sidDay>=zoomFirst,mod(timFit,sidYear)/sidDay<=zoomEnd));
 zoomIndexGal = find(and(mod(timGal,sidYear)>=zoomFirst,mod(timGal,sidYear)<=zoomEnd));
 l=plot(mod(timFit(zoomIndex),sidYear)/sidDay, real(torqFit(zoomIndex))*1e15/(r*m), '.');
@@ -259,8 +259,8 @@ pos = get(gcf, 'Position'); %// gives x left, y bottom, width, height
 width = pos(3);
 height = pos(4);
 
-annotation(gcf,'line',[0.4737 0.497],[0.6951 0.412],'LineWidth',1.7);
-annotation(gcf,'line',[0.4747 0.496],[0.948 0.61],'LineWidth',1.7);
+annotation(gcf,'line',[0.45 0.476],[0.73 0.35],'LineWidth',1.7);
+annotation(gcf,'line',[0.45 0.476],[0.981 0.69],'LineWidth',1.7);
 
 annotation(gcf,'rectangle',[0.135 0.135 0.675 0.1],'FaceColor',[0.90,0.90,0.90],'FaceAlpha',0);
 annotation(gcf,'rectangle',[0.135 0.135 0.07 0.1],'FaceColor',[0.466666666666667 0.674509803921569 0.188235294117647],'FaceAlpha',0.15, 'LineStyle','none');
@@ -308,16 +308,16 @@ tiledlayout(4,4)
 nexttile([1,3])
 x = [-2.5 -2.0 -1.5 -1.0 -.5 0 .5 1.0 1.5 2.0 2.5];
 
-labelH = 320;
+labelH = 0.35;
 
 [n,x] = hist(cVect*1e15/(r*m), x);
-bar(x,n,1);
+bar(x,n/mcN,1);
 hold on
-text(-2.4,labelH,['$\mu_{in}$ = ' num2str(mean(cVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
-text(1.1,labelH,['$\sigma_{in}$ = ' num2str(std(cVect)/(r*m)*1e15,2) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(-2.3,labelH,['$\mu_{in}$ = ' num2str(mean(cVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
+text(0.75,labelH,['$\sigma_{in}$ = ' num2str(std(cVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14)
 hold off
 xlim([min(x) max(x)])
-ylim([0 max(n)*1.2])
+ylim([0 0.4])
 set(gca,'XTickLabel',[])
 set(gca,'XTick',x)
 xticks(x)
@@ -343,13 +343,13 @@ grid on
 
 nexttile(8,[3,1])
 [n,x] = hist(sVect*1e15/(r*m),x);
-barh(x,n,1);
+barh(x,n/mcN,1);
 hold on
-text(labelH,2.4,['$\mu_{out}$ = ' num2str(mean(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
-text(labelH,-1.1,['$\sigma_{out}$ = ' num2str(std(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(labelH,2.3,['$\mu_{out}$ = ' num2str(mean(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
+text(labelH,-0.75,['$\sigma_{out}$ = ' num2str(std(sVect)/(r*m)*1e15,1) ' fm/s$^2$'],'Interpreter', 'latex','FontSize',14,'Rotation',-90)
 hold off
 ylim([min(x) max(x)])
-xlim([0 max(n)*1.2])
+xlim([0 0.4])
 set(gca,'YTickLabel',[])
 set(gca,'XGrid','off','YGrid','on')
 set(gca,'YTick',x)

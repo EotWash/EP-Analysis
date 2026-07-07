@@ -416,11 +416,11 @@ if(true)
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'EP_TimeSeries.pdf','-dpdf','-r1200')
+    print(fig2,'EP_TimeSeries_Cut.pdf','-dpdf','-r1200')
 
     fig2=figure(3);
     set(fig2,'Units','Inches');
     pos = get(fig2,'Position');
     set(fig2,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig2,'EP_GalacticFits.pdf','-dpdf','-r1200')
+    print(fig2,'EP_GalacticFits_Cut.pdf','-dpdf','-r1200')
 end
